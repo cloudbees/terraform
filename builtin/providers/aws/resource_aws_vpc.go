@@ -119,6 +119,8 @@ func resourceAwsVpcCreate(d *schema.ResourceData, meta interface{}) error {
 			d.Id(), err)
 	}
 
+	log.Printf("[INFO] VPC (%s) is now available", d.Id())
+
 	// Update our attributes and return
 	return resourceAwsVpcUpdate(d, meta)
 }
@@ -292,11 +294,33 @@ func resourceAwsVpcUpdate(d *schema.ResourceData, meta interface{}) error {
 		d.SetPartial("enable_classiclink")
 	}
 
-	if err := setTags(conn, d); err != nil {
+	err := resource.Retry(5*time.Minute, func() *resource.RetryError {
+		log.Printf("[INFO] Setting tags VPC ID: %s", d.Id())
+		err := setTags(conn, d)
+		log.Printf("[INFO] Set tags for VPC ID: %s %s", d.Id(), err)
+		if err == nil {
+			return nil
+		}
+		ec2err, ok := err.(awserr.Error)
+		if !ok {
+			log.Printf("[INFO] RetryableError setting tags VPC ID: %s %s", d.Id(), err)
+			return resource.RetryableError(err)
+		}
+		switch ec2err.Code() {
+		case "InvalidVpcID.NotFound":
+			log.Printf("[INFO] RetryableError setting tags VPC ID: %s %s", d.Id(), err)
+			return resource.RetryableError(err) // retry
+		}
+		log.Printf("[INFO] NonRetryableError setting tags VPC ID: %s %s", d.Id(), err)
+		return resource.NonRetryableError(err)
+	})
+
+	if err != nil {
 		return err
 	} else {
 		d.SetPartial("tags")
 	}
+	log.Printf("[INFO] Done set tags for VPC ID: %s", d.Id())
 
 	d.Partial(false)
 	return resourceAwsVpcRead(d, meta)
@@ -310,24 +334,30 @@ func resourceAwsVpcDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[INFO] Deleting VPC: %s", d.Id())
 
-	return resource.Retry(5*time.Minute, func() *resource.RetryError {
+	return resource.Retry(15*time.Minute, func() *resource.RetryError {
 		_, err := conn.DeleteVpc(DeleteVpcOpts)
 		if err == nil {
+			log.Printf("[INFO] Deleted VPC ID: %s", d.Id())
 			return nil
 		}
+		log.Printf("[INFO] Error deleting VPC ID: %s %s", d.Id(), err)
 
 		ec2err, ok := err.(awserr.Error)
 		if !ok {
+			log.Printf("[INFO] NonRetryableError deleting VPC ID: %s %s", d.Id(), ec2err)
 			return resource.NonRetryableError(err)
 		}
 
 		switch ec2err.Code() {
 		case "InvalidVpcID.NotFound":
+			log.Printf("[INFO] Deleted VPC ID (no longer exists): %s", d.Id())
 			return nil
 		case "DependencyViolation":
+			log.Printf("[INFO] Will retry DependencyViolation deleting VPC ID: %s", d.Id())
 			return resource.RetryableError(err)
 		}
 
+		log.Printf("[INFO] NonRetryableError deleting VPC ID: %s %s", d.Id(), err)
 		return resource.NonRetryableError(fmt.Errorf("Error deleting VPC: %s", err))
 	})
 }

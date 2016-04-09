@@ -107,7 +107,7 @@ func resourceAwsRouteTableCreate(d *schema.ResourceData, meta interface{}) error
 		Pending: []string{"pending"},
 		Target:  []string{"ready"},
 		Refresh: resourceAwsRouteTableStateRefreshFunc(conn, d.Id()),
-		Timeout: 1 * time.Minute,
+		Timeout: 5 * time.Minute,
 	}
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf(
@@ -298,7 +298,28 @@ func resourceAwsRouteTableUpdate(d *schema.ResourceData, meta interface{}) error
 			}
 
 			log.Printf("[INFO] Creating route for %s: %#v", d.Id(), opts)
-			if _, err := conn.CreateRoute(&opts); err != nil {
+
+			err := resource.Retry(2*time.Minute, func() *resource.RetryError {
+				log.Printf("[INFO] Creating Route for RouteTable ID: %s", d.Id())
+				_, err := conn.CreateRoute(&opts)
+				if err == nil {
+					return nil
+				}
+				ec2err, ok := err.(awserr.Error)
+				if !ok {
+					log.Printf("[INFO] RetryableError creating route for RouteTable ID: %s %s", d.Id(), err)
+					return resource.RetryableError(err)
+				}
+				switch ec2err.Code() {
+				case "InvalidRouteTableID.NotFound":
+					log.Printf("[INFO] RetryableError creating route for RouteTable ID: %s %s", d.Id(), err)
+					return resource.RetryableError(err) // retry
+				}
+				log.Printf("[INFO] NonRetryableError creating route for RouteTable ID: %s %s", d.Id(), err)
+				return resource.NonRetryableError(err)
+			})
+
+			if err != nil {
 				return err
 			}
 
