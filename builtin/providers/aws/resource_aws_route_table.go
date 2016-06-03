@@ -305,15 +305,12 @@ func resourceAwsRouteTableUpdate(d *schema.ResourceData, meta interface{}) error
 				if err == nil {
 					return nil
 				}
-				ec2err, ok := err.(awserr.Error)
-				if !ok {
-					log.Printf("[INFO] RetryableError creating route for RouteTable ID: %s %s", d.Id(), err)
-					return resource.RetryableError(err)
-				}
-				switch ec2err.Code() {
-				case "InvalidRouteTableID.NotFound":
-					log.Printf("[INFO] RetryableError creating route for RouteTable ID: %s %s", d.Id(), err)
-					return resource.RetryableError(err) // retry
+				if ec2err, ok := err.(awserr.Error); ok {
+					switch ec2err.Code() {
+					case "InvalidRouteTableID.NotFound":
+						log.Printf("[INFO] RetryableError creating route for RouteTable ID: %s %s", d.Id(), err)
+						return resource.RetryableError(err) // retry
+					}
 				}
 				log.Printf("[INFO] NonRetryableError creating route for RouteTable ID: %s %s", d.Id(), err)
 				return resource.NonRetryableError(err)

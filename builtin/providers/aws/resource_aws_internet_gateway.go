@@ -177,15 +177,12 @@ func resourceAwsInternetGatewayAttach(d *schema.ResourceData, meta interface{}) 
 		if err == nil {
 			return nil
 		}
-		ec2err, ok := err.(awserr.Error)
-		if !ok {
-			log.Printf("[INFO] RetryableError attaching InternetGateway ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err)
-		}
-		switch ec2err.Code() {
-		case "InvalidInternetGatewayID.NotFound":
-			log.Printf("[INFO] RetryableError attaching InternetGateway ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err) // retry
+		if ec2err, ok := err.(awserr.Error); ok {
+			switch ec2err.Code() {
+			case "InvalidInternetGatewayID.NotFound":
+				log.Printf("[INFO] RetryableError attaching InternetGateway ID: %s %s", d.Id(), err)
+				return resource.RetryableError(err) // retry
+			}
 		}
 		log.Printf("[INFO] NonRetryableError attaching InternetGateway ID: %s %s", d.Id(), err)
 		return resource.NonRetryableError(err)
