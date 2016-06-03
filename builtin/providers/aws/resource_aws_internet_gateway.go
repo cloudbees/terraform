@@ -60,26 +60,8 @@ func resourceAwsInternetGatewayCreate(d *schema.ResourceData, meta interface{}) 
 		}
 	})
 
-	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
-		log.Printf("[INFO] Setting tags InternetGateway ID: %s", d.Id())
-		err = setTags(conn, d)
-		if err == nil {
-			return nil
-		}
-		ec2err, ok := err.(awserr.Error)
-		if !ok {
-			log.Printf("[INFO] RetryableError setting tags InternetGateway ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err)
-		}
-		switch ec2err.Code() {
-		case "InvalidInternetGatewayID.NotFound":
-			log.Printf("[INFO] RetryableError setting tags InternetGateway ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err) // retry
-		}
-		log.Printf("[INFO] NonRetryableError setting tags InternetGateway ID: %s %s", d.Id(), err)
-		return resource.NonRetryableError(err)
-	})
-
+	log.Printf("[INFO] Setting tags InternetGateway ID: %s", d.Id())
+	err = setTags(conn, d)
 	if err != nil {
 		return err
 	}

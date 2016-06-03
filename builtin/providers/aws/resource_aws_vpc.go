@@ -294,28 +294,7 @@ func resourceAwsVpcUpdate(d *schema.ResourceData, meta interface{}) error {
 		d.SetPartial("enable_classiclink")
 	}
 
-	err := resource.Retry(5*time.Minute, func() *resource.RetryError {
-		log.Printf("[INFO] Setting tags VPC ID: %s", d.Id())
-		err := setTags(conn, d)
-		log.Printf("[INFO] Set tags for VPC ID: %s %s", d.Id(), err)
-		if err == nil {
-			return nil
-		}
-		ec2err, ok := err.(awserr.Error)
-		if !ok {
-			log.Printf("[INFO] RetryableError setting tags VPC ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err)
-		}
-		switch ec2err.Code() {
-		case "InvalidVpcID.NotFound":
-			log.Printf("[INFO] RetryableError setting tags VPC ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err) // retry
-		}
-		log.Printf("[INFO] NonRetryableError setting tags VPC ID: %s %s", d.Id(), err)
-		return resource.NonRetryableError(err)
-	})
-
-	if err != nil {
+	if err := setTags(conn, d); err != nil {
 		return err
 	} else {
 		d.SetPartial("tags")

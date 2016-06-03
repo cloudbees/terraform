@@ -331,26 +331,7 @@ func resourceAwsSecurityGroupUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	err = resource.Retry(5*time.Minute, func() *resource.RetryError {
-		log.Printf("[INFO] Setting tags SecurityGroup ID: %s", d.Id())
-		err = setTags(conn, d)
-		if err == nil {
-			return nil
-		}
-		ec2err, ok := err.(awserr.Error)
-		if !ok {
-			log.Printf("[INFO] RetryableError setting tags SecurityGroup ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err)
-		}
-		switch ec2err.Code() {
-		case "InvalidGroup.NotFound":
-			log.Printf("[INFO] RetryableError setting tags SecurityGroup ID: %s %s", d.Id(), err)
-			return resource.RetryableError(err) // retry
-		}
-		log.Printf("[INFO] NonRetryableError setting tags SecurityGroup ID: %s %s", d.Id(), err)
-		return resource.NonRetryableError(err)
-	})
-	if err != nil {
+	if err := setTags(conn, d); err != nil {
 		return err
 	}
 
