@@ -57,7 +57,6 @@ The following arguments are supported:
   "Instance Store") volumes on the instance. See [Block Devices](#block-devices) below for details.
 
 
-<a id="block-devices"></a>
 ## Block devices
 
 Each of the `*_block_device` attributes controls a portion of the AWS
@@ -91,9 +90,6 @@ Each `ebs_block_device` supports the following:
   This must be set with a `volume_type` of `"io1"`.
 * `delete_on_termination` - (Optional) Whether the volume should be destroyed
   on instance termination (Default: `true`).
-* `encrypted` - (Optional) Enables [EBS
-  encryption](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html)
-  on the volume (Default: `false`). Cannot be used with `snapshot_id`.
 
 Modifying any `ebs_block_device` currently requires resource replacement.
 
