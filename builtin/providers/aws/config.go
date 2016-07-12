@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-multierror"
@@ -15,6 +17,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	awsCredentials "github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/apigateway"
@@ -36,9 +41,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elasticache"
 	"github.com/aws/aws-sdk-go/service/elasticbeanstalk"
 	elasticsearch "github.com/aws/aws-sdk-go/service/elasticsearchservice"
-	"github.com/aws/aws-sdk-go/service/elastictranscoder"
 	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/emr"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/glacier"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -52,7 +55,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/aws/aws-sdk-go/service/sts"
 )
 
 type Config struct {
@@ -76,44 +78,40 @@ type Config struct {
 }
 
 type AWSClient struct {
-	cfconn                *cloudformation.CloudFormation
-	cloudfrontconn        *cloudfront.CloudFront
-	cloudtrailconn        *cloudtrail.CloudTrail
-	cloudwatchconn        *cloudwatch.CloudWatch
-	cloudwatchlogsconn    *cloudwatchlogs.CloudWatchLogs
-	cloudwatcheventsconn  *cloudwatchevents.CloudWatchEvents
-	dsconn                *directoryservice.DirectoryService
-	dynamodbconn          *dynamodb.DynamoDB
-	ec2conn               *ec2.EC2
-	ecrconn               *ecr.ECR
-	ecsconn               *ecs.ECS
-	efsconn               *efs.EFS
-	elbconn               *elb.ELB
-	emrconn               *emr.EMR
-	esconn                *elasticsearch.ElasticsearchService
-	apigateway            *apigateway.APIGateway
-	autoscalingconn       *autoscaling.AutoScaling
-	s3conn                *s3.S3
-	sqsconn               *sqs.SQS
-	snsconn               *sns.SNS
-	stsconn               *sts.STS
-	redshiftconn          *redshift.Redshift
-	r53conn               *route53.Route53
-	accountid             string
-	region                string
-	rdsconn               *rds.RDS
-	iamconn               *iam.IAM
-	kinesisconn           *kinesis.Kinesis
-	kmsconn               *kms.KMS
-	firehoseconn          *firehose.Firehose
-	elasticacheconn       *elasticache.ElastiCache
-	elasticbeanstalkconn  *elasticbeanstalk.ElasticBeanstalk
-	elastictranscoderconn *elastictranscoder.ElasticTranscoder
-	lambdaconn            *lambda.Lambda
-	opsworksconn          *opsworks.OpsWorks
-	glacierconn           *glacier.Glacier
-	codedeployconn        *codedeploy.CodeDeploy
-	codecommitconn        *codecommit.CodeCommit
+	cfconn               *cloudformation.CloudFormation
+	cloudfrontconn       *cloudfront.CloudFront
+	cloudtrailconn       *cloudtrail.CloudTrail
+	cloudwatchconn       *cloudwatch.CloudWatch
+	cloudwatchlogsconn   *cloudwatchlogs.CloudWatchLogs
+	cloudwatcheventsconn *cloudwatchevents.CloudWatchEvents
+	dsconn               *directoryservice.DirectoryService
+	dynamodbconn         *dynamodb.DynamoDB
+	ec2conn              *ec2.EC2
+	ecrconn              *ecr.ECR
+	ecsconn              *ecs.ECS
+	efsconn              *efs.EFS
+	elbconn              *elb.ELB
+	esconn               *elasticsearch.ElasticsearchService
+	apigateway           *apigateway.APIGateway
+	autoscalingconn      *autoscaling.AutoScaling
+	s3conn               *s3.S3
+	sqsconn              *sqs.SQS
+	snsconn              *sns.SNS
+	redshiftconn         *redshift.Redshift
+	r53conn              *route53.Route53
+	region               string
+	rdsconn              *rds.RDS
+	iamconn              *iam.IAM
+	kinesisconn          *kinesis.Kinesis
+	kmsconn              *kms.KMS
+	firehoseconn         *firehose.Firehose
+	elasticacheconn      *elasticache.ElastiCache
+	elasticbeanstalkconn *elasticbeanstalk.ElasticBeanstalk
+	lambdaconn           *lambda.Lambda
+	opsworksconn         *opsworks.OpsWorks
+	glacierconn          *glacier.Glacier
+	codedeployconn       *codedeploy.CodeDeploy
+	codecommitconn       *codecommit.CodeCommit
 }
 
 // Client configures and returns a fully initialized AWSClient
@@ -135,10 +133,10 @@ func (c *Config) Client() (interface{}, error) {
 		client.region = c.Region
 
 		log.Println("[INFO] Building AWS auth structure")
-		creds := GetCredentials(c.AccessKey, c.SecretKey, c.Token, c.Profile, c.CredsFilename)
+		creds := getCreds(c.AccessKey, c.SecretKey, c.Token, c.Profile, c.CredsFilename)
 		// Call Get to check for credential provider. If nothing found, we'll get an
 		// error, and we can present it nicely to the user
-		cp, err := creds.Get()
+		_, err = creds.Get()
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "NoCredentialProviders" {
 				errs = append(errs, fmt.Errorf(`No valid credential sources found for AWS Provider.
@@ -149,9 +147,6 @@ func (c *Config) Client() (interface{}, error) {
 			}
 			return nil, &multierror.Error{Errors: errs}
 		}
-
-		log.Printf("[INFO] AWS Auth provider used: %q", cp.ProviderName)
-
 		awsConfig := &aws.Config{
 			Credentials: creds,
 			Region:      aws.String(c.Region),
@@ -179,13 +174,9 @@ func (c *Config) Client() (interface{}, error) {
 		awsIamSess := sess.Copy(&aws.Config{Endpoint: aws.String(c.IamEndpoint)})
 		client.iamconn = iam.New(awsIamSess)
 
-		log.Println("[INFO] Initializing STS connection")
-		client.stsconn = sts.New(sess)
-
 		err = c.ValidateCredentials(client.iamconn)
 		if err != nil {
 			errs = append(errs, err)
-			return nil, &multierror.Error{Errors: errs}
 		}
 
 		// Some services exist only in us-east-1, e.g. because they manage
@@ -194,11 +185,6 @@ func (c *Config) Client() (interface{}, error) {
 		// endpoints:
 		// http://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html
 		usEast1Sess := sess.Copy(&aws.Config{Region: aws.String("us-east-1")})
-
-		accountId, err := GetAccountId(client.iamconn, client.stsconn, cp.ProviderName)
-		if err == nil {
-			client.accountid = accountId
-		}
 
 		log.Println("[INFO] Initializing DynamoDB connection")
 		dynamoSess := sess.Copy(&aws.Config{Endpoint: aws.String(c.DynamoDBEndpoint)})
@@ -230,10 +216,7 @@ func (c *Config) Client() (interface{}, error) {
 		log.Println("[INFO] Initializing Elastic Beanstalk Connection")
 		client.elasticbeanstalkconn = elasticbeanstalk.New(sess)
 
-		log.Println("[INFO] Initializing Elastic Transcoder Connection")
-		client.elastictranscoderconn = elastictranscoder.New(sess)
-
-		authErr := c.ValidateAccountId(client.accountid)
+		authErr := c.ValidateAccountId(client.iamconn)
 		if authErr != nil {
 			errs = append(errs, authErr)
 		}
@@ -263,9 +246,6 @@ func (c *Config) Client() (interface{}, error) {
 
 		log.Println("[INFO] Initializing ElasticSearch Connection")
 		client.esconn = elasticsearch.New(sess)
-
-		log.Println("[INFO] Initializing EMR Connection")
-		client.emrconn = emr.New(sess)
 
 		log.Println("[INFO] Initializing Route 53 connection")
 		client.r53conn = route53.New(usEast1Sess)
@@ -343,7 +323,7 @@ func (c *Config) ValidateCredentials(iamconn *iam.IAM) error {
 
 	if awsErr, ok := err.(awserr.Error); ok {
 		if awsErr.Code() == "AccessDenied" || awsErr.Code() == "ValidationError" {
-			log.Printf("[WARN] AccessDenied Error with iam.GetUser, assuming IAM role")
+			log.Printf("[WARN] AccessDenied Error with iam.GetUser, assuming IAM profile")
 			// User may be an IAM instance profile, or otherwise IAM role without the
 			// GetUser permissions, so fail silently
 			return nil
@@ -359,16 +339,34 @@ func (c *Config) ValidateCredentials(iamconn *iam.IAM) error {
 
 // ValidateAccountId returns a context-specific error if the configured account
 // id is explicitly forbidden or not authorised; and nil if it is authorised.
-func (c *Config) ValidateAccountId(accountId string) error {
+func (c *Config) ValidateAccountId(iamconn *iam.IAM) error {
 	if c.AllowedAccountIds == nil && c.ForbiddenAccountIds == nil {
 		return nil
 	}
 
 	log.Printf("[INFO] Validating account ID")
 
+	out, err := iamconn.GetUser(nil)
+
+	if err != nil {
+		awsErr, _ := err.(awserr.Error)
+		if awsErr.Code() == "ValidationError" {
+			log.Printf("[WARN] ValidationError with iam.GetUser, assuming its an IAM profile")
+			// User may be an IAM instance profile, so fail silently.
+			// If it is an IAM instance profile
+			// validating account might be superfluous
+			return nil
+		} else {
+			return fmt.Errorf("Failed getting account ID from IAM: %s", err)
+			// return error if the account id is explicitly not authorised
+		}
+	}
+
+	account_id := strings.Split(*out.User.Arn, ":")[4]
+
 	if c.ForbiddenAccountIds != nil {
 		for _, id := range c.ForbiddenAccountIds {
-			if id == accountId {
+			if id == account_id {
 				return fmt.Errorf("Forbidden account ID (%s)", id)
 			}
 		}
@@ -376,14 +374,67 @@ func (c *Config) ValidateAccountId(accountId string) error {
 
 	if c.AllowedAccountIds != nil {
 		for _, id := range c.AllowedAccountIds {
-			if id == accountId {
+			if id == account_id {
 				return nil
 			}
 		}
-		return fmt.Errorf("Account ID not allowed (%s)", accountId)
+		return fmt.Errorf("Account ID not allowed (%s)", account_id)
 	}
 
 	return nil
+}
+
+// This function is responsible for reading credentials from the
+// environment in the case that they're not explicitly specified
+// in the Terraform configuration.
+func getCreds(key, secret, token, profile, credsfile string) *awsCredentials.Credentials {
+	// build a chain provider, lazy-evaulated by aws-sdk
+	providers := []awsCredentials.Provider{
+		&awsCredentials.StaticProvider{Value: awsCredentials.Value{
+			AccessKeyID:     key,
+			SecretAccessKey: secret,
+			SessionToken:    token,
+		}},
+		&awsCredentials.EnvProvider{},
+		&awsCredentials.SharedCredentialsProvider{
+			Filename: credsfile,
+			Profile:  profile,
+		},
+	}
+
+	// We only look in the EC2 metadata API if we can connect
+	// to the metadata service within a reasonable amount of time
+	metadataURL := os.Getenv("AWS_METADATA_URL")
+	if metadataURL == "" {
+		metadataURL = "http://169.254.169.254:80/latest"
+	}
+	c := http.Client{
+		Timeout: 100 * time.Millisecond,
+	}
+
+	r, err := c.Get(metadataURL)
+	// Flag to determine if we should add the EC2Meta data provider. Default false
+	var useIAM bool
+	if err == nil {
+		// AWS will add a "Server: EC2ws" header value for the metadata request. We
+		// check the headers for this value to ensure something else didn't just
+		// happent to be listening on that IP:Port
+		if r.Header["Server"] != nil && strings.Contains(r.Header["Server"][0], "EC2") {
+			useIAM = true
+		}
+	}
+
+	if useIAM {
+		log.Printf("[DEBUG] EC2 Metadata service found, adding EC2 Role Credential Provider")
+		providers = append(providers, &ec2rolecreds.EC2RoleProvider{
+			Client: ec2metadata.New(session.New(&aws.Config{
+				Endpoint: aws.String(metadataURL),
+			})),
+		})
+	} else {
+		log.Printf("[DEBUG] EC2 Metadata service not found, not adding EC2 Role Credential Provider")
+	}
+	return awsCredentials.NewChainCredentials(providers)
 }
 
 // addTerraformVersionToUserAgent is a named handler that will add Terraform's

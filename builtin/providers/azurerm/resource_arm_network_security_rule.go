@@ -2,9 +2,12 @@ package azurerm
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/arm/network"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -16,24 +19,24 @@ func resourceArmNetworkSecurityRule() *schema.Resource {
 		Delete: resourceArmNetworkSecurityRuleDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"network_security_group_name": {
+			"network_security_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"description": {
+			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
@@ -46,39 +49,39 @@ func resourceArmNetworkSecurityRule() *schema.Resource {
 				},
 			},
 
-			"protocol": {
+			"protocol": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validateNetworkSecurityRuleProtocol,
 			},
 
-			"source_port_range": {
+			"source_port_range": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"destination_port_range": {
+			"destination_port_range": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"source_address_prefix": {
+			"source_address_prefix": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"destination_address_prefix": {
+			"destination_address_prefix": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"access": {
+			"access": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validateNetworkSecurityRuleAccess,
 			},
 
-			"priority": {
+			"priority": &schema.Schema{
 				Type:     schema.TypeInt,
 				Required: true,
 				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
@@ -91,7 +94,7 @@ func resourceArmNetworkSecurityRule() *schema.Resource {
 				},
 			},
 
-			"direction": {
+			"direction": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validateNetworkSecurityRuleDirection,
@@ -112,7 +115,7 @@ func resourceArmNetworkSecurityRuleCreate(d *schema.ResourceData, meta interface
 	destination_port_range := d.Get("destination_port_range").(string)
 	source_address_prefix := d.Get("source_address_prefix").(string)
 	destination_address_prefix := d.Get("destination_address_prefix").(string)
-	priority := int32(d.Get("priority").(int))
+	priority := d.Get("priority").(int)
 	access := d.Get("access").(string)
 	direction := d.Get("direction").(string)
 	protocol := d.Get("protocol").(string)
@@ -141,21 +144,22 @@ func resourceArmNetworkSecurityRuleCreate(d *schema.ResourceData, meta interface
 		Properties: &properties,
 	}
 
-	_, err := secClient.CreateOrUpdate(resGroup, nsgName, name, sgr, make(chan struct{}))
+	resp, err := secClient.CreateOrUpdate(resGroup, nsgName, name, sgr)
 	if err != nil {
 		return err
 	}
+	d.SetId(*resp.ID)
 
-	read, err := secClient.Get(resGroup, nsgName, name)
-	if err != nil {
-		return err
+	log.Printf("[DEBUG] Waiting for Network Security Rule (%s) to become available", name)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"Accepted", "Updating"},
+		Target:  []string{"Succeeded"},
+		Refresh: securityRuleStateRefreshFunc(client, resGroup, nsgName, name),
+		Timeout: 10 * time.Minute,
 	}
-	if read.ID == nil {
-		return fmt.Errorf("Cannot read Security Group Rule %s/%s (resource group %s) ID",
-			nsgName, name, resGroup)
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting for Network Securty Rule (%s) to become available: %s", name, err)
 	}
-
-	d.SetId(*read.ID)
 
 	return resourceArmNetworkSecurityRuleRead(d, meta)
 }
@@ -198,7 +202,18 @@ func resourceArmNetworkSecurityRuleDelete(d *schema.ResourceData, meta interface
 	armMutexKV.Lock(nsgName)
 	defer armMutexKV.Unlock(nsgName)
 
-	_, err = secRuleClient.Delete(resGroup, nsgName, sgRuleName, make(chan struct{}))
+	_, err = secRuleClient.Delete(resGroup, nsgName, sgRuleName)
 
 	return err
+}
+
+func securityRuleStateRefreshFunc(client *ArmClient, resourceGroupName string, networkSecurityGroupName string, securityRuleName string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		res, err := client.secRuleClient.Get(resourceGroupName, networkSecurityGroupName, securityRuleName)
+		if err != nil {
+			return nil, "", fmt.Errorf("Error issuing read request in securityGroupStateRefreshFunc to Azure ARM for network security rule '%s' (RG: '%s') (NSG: '%s'): %s", securityRuleName, resourceGroupName, networkSecurityGroupName, err)
+		}
+
+		return res, *res.Properties.ProvisioningState, nil
+	}
 }

@@ -87,12 +87,9 @@ func testCheckAzureRMStorageQueueExists(name string) resource.TestCheckFunc {
 		}
 
 		armClient := testAccProvider.Meta().(*ArmClient)
-		queueClient, accountExists, err := armClient.getQueueServiceClientForStorageAccount(resourceGroup, storageAccountName)
+		queueClient, err := armClient.getQueueServiceClientForStorageAccount(resourceGroup, storageAccountName)
 		if err != nil {
 			return err
-		}
-		if !accountExists {
-			return fmt.Errorf("Bad: Storage Account %q does not exist", storageAccountName)
 		}
 
 		exists, err := queueClient.QueueExists(name)
@@ -122,11 +119,8 @@ func testCheckAzureRMStorageQueueDestroy(s *terraform.State) error {
 		}
 
 		armClient := testAccProvider.Meta().(*ArmClient)
-		queueClient, accountExists, err := armClient.getQueueServiceClientForStorageAccount(resourceGroup, storageAccountName)
+		queueClient, err := armClient.getQueueServiceClientForStorageAccount(resourceGroup, storageAccountName)
 		if err != nil {
-			return nil
-		}
-		if !accountExists {
 			return nil
 		}
 

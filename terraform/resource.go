@@ -42,6 +42,7 @@ type Resource struct {
 	State        *InstanceState
 	Provisioners []*ResourceProvisionerConfig
 	Flags        ResourceFlag
+	TaintedIndex int
 }
 
 // ResourceKind specifies what kind of instance we're working with, whether
@@ -52,6 +53,7 @@ const (
 	FlagPrimary ResourceFlag = 1 << iota
 	FlagTainted
 	FlagOrphan
+	FlagHasTainted
 	FlagReplacePrimary
 	FlagDeposed
 )

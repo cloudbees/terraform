@@ -347,8 +347,9 @@ func TestTaint_module(t *testing.T) {
 }
 
 const testTaintStr = `
-test_instance.foo: (tainted)
-  ID = bar
+test_instance.foo: (1 tainted)
+  ID = <not created>
+  Tainted ID 1 = bar
 `
 
 const testTaintDefaultStr = `
@@ -361,6 +362,7 @@ test_instance.foo:
   ID = bar
 
 module.child:
-  test_instance.blah: (tainted)
-    ID = blah
+  test_instance.blah: (1 tainted)
+    ID = <not created>
+    Tainted ID 1 = blah
 `

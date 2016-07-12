@@ -16,13 +16,13 @@ func resourceArmStorageQueue() *schema.Resource {
 		Delete: resourceArmStorageQueueDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validateArmStorageQueueName,
 			},
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -71,12 +71,9 @@ func resourceArmStorageQueueCreate(d *schema.ResourceData, meta interface{}) err
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	queueClient, accountExists, err := armClient.getQueueServiceClientForStorageAccount(resourceGroupName, storageAccountName)
+	queueClient, err := armClient.getQueueServiceClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		return fmt.Errorf("Storage Account %q Not Found", storageAccountName)
 	}
 
 	name := d.Get("name").(string)
@@ -112,14 +109,9 @@ func resourceArmStorageQueueExists(d *schema.ResourceData, meta interface{}) (bo
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	queueClient, accountExists, err := armClient.getQueueServiceClientForStorageAccount(resourceGroupName, storageAccountName)
+	queueClient, err := armClient.getQueueServiceClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return false, err
-	}
-	if !accountExists {
-		log.Printf("[DEBUG] Storage account %q not found, removing queue %q from state", storageAccountName, d.Id())
-		d.SetId("")
-		return false, nil
 	}
 
 	name := d.Get("name").(string)
@@ -144,13 +136,9 @@ func resourceArmStorageQueueDelete(d *schema.ResourceData, meta interface{}) err
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	queueClient, accountExists, err := armClient.getQueueServiceClientForStorageAccount(resourceGroupName, storageAccountName)
+	queueClient, err := armClient.getQueueServiceClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		log.Printf("[INFO]Storage Account %q doesn't exist so the blob won't exist", storageAccountName)
-		return nil
 	}
 
 	name := d.Get("name").(string)

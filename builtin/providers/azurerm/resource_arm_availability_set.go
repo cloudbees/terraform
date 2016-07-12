@@ -7,7 +7,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/arm/compute"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/jen20/riviera/azure"
 )
 
 func resourceArmAvailabilitySet() *schema.Resource {
@@ -18,26 +17,26 @@ func resourceArmAvailabilitySet() *schema.Resource {
 		Delete: resourceArmAvailabilitySetDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"location": {
+			"location": &schema.Schema{
 				Type:      schema.TypeString,
 				Required:  true,
 				ForceNew:  true,
 				StateFunc: azureRMNormalizeLocation,
 			},
 
-			"platform_update_domain_count": {
+			"platform_update_domain_count": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  5,
@@ -51,7 +50,7 @@ func resourceArmAvailabilitySet() *schema.Resource {
 				},
 			},
 
-			"platform_fault_domain_count": {
+			"platform_fault_domain_count": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  3,
@@ -87,8 +86,8 @@ func resourceArmAvailabilitySetCreate(d *schema.ResourceData, meta interface{}) 
 		Name:     &name,
 		Location: &location,
 		Properties: &compute.AvailabilitySetProperties{
-			PlatformFaultDomainCount:  azure.Int32(int32(faultDomainCount)),
-			PlatformUpdateDomainCount: azure.Int32(int32(updateDomainCount)),
+			PlatformFaultDomainCount:  &faultDomainCount,
+			PlatformUpdateDomainCount: &updateDomainCount,
 		},
 		Tags: expandTags(tags),
 	}

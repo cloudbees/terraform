@@ -124,9 +124,7 @@ func resourceAwsCloudWatchLogGroupUpdate(d *schema.ResourceData, meta interface{
 			})
 		}
 
-		if err != nil {
-			return err
-		}
+		return err
 	}
 
 	return resourceAwsCloudWatchLogGroupRead(d, meta)

@@ -134,6 +134,7 @@ type QueueMetadataResponse struct {
 func (c QueueServiceClient) SetMetadata(name string, metadata map[string]string) error {
 	uri := c.client.getEndpoint(queueServiceName, pathForQueue(name), url.Values{"comp": []string{"metadata"}})
 	headers := c.client.getStandardHeaders()
+	headers["Content-Length"] = "0"
 	for k, v := range metadata {
 		headers[userDefinedMetadataHeaderPrefix+k] = v
 	}
@@ -194,6 +195,7 @@ func (c QueueServiceClient) GetMetadata(name string) (QueueMetadataResponse, err
 func (c QueueServiceClient) CreateQueue(name string) error {
 	uri := c.client.getEndpoint(queueServiceName, pathForQueue(name), url.Values{})
 	headers := c.client.getStandardHeaders()
+	headers["Content-Length"] = "0"
 	resp, err := c.client.exec("PUT", uri, headers, nil)
 	if err != nil {
 		return err

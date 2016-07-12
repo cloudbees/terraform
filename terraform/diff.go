@@ -215,12 +215,11 @@ func (d *ModuleDiff) String() string {
 		rdiff := d.Resources[name]
 
 		crud := "UPDATE"
-		switch {
-		case rdiff.RequiresNew() && (rdiff.Destroy || rdiff.DestroyTainted):
+		if rdiff.RequiresNew() && (rdiff.Destroy || rdiff.DestroyTainted) {
 			crud = "DESTROY/CREATE"
-		case rdiff.Destroy:
+		} else if rdiff.Destroy {
 			crud = "DESTROY"
-		case rdiff.RequiresNew():
+		} else if rdiff.RequiresNew() {
 			crud = "CREATE"
 		}
 
@@ -247,30 +246,22 @@ func (d *ModuleDiff) String() string {
 			attrDiff := rdiff.Attributes[attrK]
 
 			v := attrDiff.New
-			u := attrDiff.Old
 			if attrDiff.NewComputed {
 				v = "<computed>"
 			}
 
-			if attrDiff.Sensitive {
-				u = "<sensitive>"
-				v = "<sensitive>"
-			}
-
-			updateMsg := ""
+			newResource := ""
 			if attrDiff.RequiresNew {
-				updateMsg = " (forces new resource)"
-			} else if attrDiff.Sensitive {
-				updateMsg = " (attribute changed)"
+				newResource = " (forces new resource)"
 			}
 
 			buf.WriteString(fmt.Sprintf(
 				"  %s:%s %#v => %#v%s\n",
 				attrK,
 				strings.Repeat(" ", keyLen-len(attrK)),
-				u,
+				attrDiff.Old,
 				v,
-				updateMsg))
+				newResource))
 		}
 	}
 
@@ -292,7 +283,6 @@ type ResourceAttrDiff struct {
 	NewRemoved  bool        // True if this attribute is being removed
 	NewExtra    interface{} // Extra information for the provider
 	RequiresNew bool        // True if change requires new resource
-	Sensitive   bool        // True if the data should not be displayed in UI output
 	Type        DiffAttrType
 }
 
@@ -364,10 +354,6 @@ func (d *InstanceDiff) GoString() string {
 func (d *InstanceDiff) RequiresNew() bool {
 	if d == nil {
 		return false
-	}
-
-	if d.DestroyTainted {
-		return true
 	}
 
 	for _, rd := range d.Attributes {

@@ -8,16 +8,23 @@ description: |-
 
 # Terraform Provider
 
-The terraform provider provides access to outputs from the Terraform state
-of shared infrastructure.
+The terraform provider exposes resources to access state meta data
+for Terraform outputs from shared infrastructure.
 
-Use the navigation to the left to read about the available data sources.
+The terraform provider is what we call a _logical provider_. This has no
+impact on how it behaves, but conceptually it is important to understand.
+The terraform provider doesn't manage any _physical_ resources; it isn't
+creating servers, writing files, etc. It is used to access the outputs
+of other Terraform states to be used as inputs for resources.
+Examples will explain this best.
+
+Use the navigation to the left to read about the available resources.
 
 ## Example Usage
 
 ```
 # Shared infrastructure state stored in Atlas
-data "terraform_remote_state" "vpc" {
+resource "terraform_remote_state" "vpc" {
     backend = "atlas"
     config {
         path = "hashicorp/vpc-prod"
@@ -26,6 +33,6 @@ data "terraform_remote_state" "vpc" {
 
 resource "aws_instance" "foo" {
     # ...
-    subnet_id = "${data.terraform_remote_state.vpc.output.subnet_id}"
+    subnet_id = "${terraform_remote_state.vpc.output.subnet_id}"
 }
 ```

@@ -15,9 +15,6 @@ func resourceVLAN() *schema.Resource {
 		Read:   resourceVLANRead,
 		Update: resourceVLANUpdate,
 		Delete: resourceVLANDelete,
-		Importer: &schema.ResourceImporter{
-			State: resourceVLANImporter,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"vlan_id": {
@@ -132,8 +129,4 @@ func resourceVLANIDInt16(id string) (int16, error) {
 	}
 
 	return int16(result), nil
-}
-
-func resourceVLANImporter(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	return []*schema.ResourceData{d}, nil
 }

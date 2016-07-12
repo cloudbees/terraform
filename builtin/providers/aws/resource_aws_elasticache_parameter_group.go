@@ -34,9 +34,8 @@ func resourceAwsElasticacheParameterGroup() *schema.Resource {
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
-				Default:  "Managed by Terraform",
 			},
 			"parameter": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -72,7 +71,7 @@ func resourceAwsElasticacheParameterGroupCreate(d *schema.ResourceData, meta int
 	log.Printf("[DEBUG] Create Cache Parameter Group: %#v", createOpts)
 	_, err := conn.CreateCacheParameterGroup(&createOpts)
 	if err != nil {
-		return fmt.Errorf("Error creating Cache Parameter Group: %s", err)
+		return fmt.Errorf("Error creating DB Parameter Group: %s", err)
 	}
 
 	d.Partial(true)

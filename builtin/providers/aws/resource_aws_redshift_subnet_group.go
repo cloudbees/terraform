@@ -30,8 +30,7 @@ func resourceAwsRedshiftSubnetGroup() *schema.Resource {
 
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "Managed by Terraform",
+				Required: true,
 			},
 
 			"subnet_ids": &schema.Schema{

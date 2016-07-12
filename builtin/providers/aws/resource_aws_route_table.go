@@ -20,9 +20,6 @@ func resourceAwsRouteTable() *schema.Resource {
 		Read:   resourceAwsRouteTableRead,
 		Update: resourceAwsRouteTableUpdate,
 		Delete: resourceAwsRouteTableDelete,
-		Importer: &schema.ResourceImporter{
-			State: resourceAwsRouteTableImportState,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"vpc_id": &schema.Schema{

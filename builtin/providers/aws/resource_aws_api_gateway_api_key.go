@@ -28,8 +28,7 @@ func resourceAwsApiGatewayApiKey() *schema.Resource {
 
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "Managed by Terraform",
+				Required: true,
 			},
 
 			"enabled": &schema.Schema{

@@ -58,7 +58,6 @@ const (
 // A ResourceVariable is a variable that is referencing the field
 // of a resource, such as "${aws_instance.foo.ami}"
 type ResourceVariable struct {
-	Mode  ResourceMode
 	Type  string // Resource type, i.e. "aws_instance"
 	Name  string // Resource name
 	Field string // Resource field
@@ -172,28 +171,11 @@ func (v *PathVariable) FullKey() string {
 }
 
 func NewResourceVariable(key string) (*ResourceVariable, error) {
-	var mode ResourceMode
-	var parts []string
-	if strings.HasPrefix(key, "data.") {
-		mode = DataResourceMode
-		parts = strings.SplitN(key, ".", 4)
-		if len(parts) < 4 {
-			return nil, fmt.Errorf(
-				"%s: data variables must be four parts: data.TYPE.NAME.ATTR",
-				key)
-		}
-
-		// Don't actually need the "data." prefix for parsing, since it's
-		// always constant.
-		parts = parts[1:]
-	} else {
-		mode = ManagedResourceMode
-		parts = strings.SplitN(key, ".", 3)
-		if len(parts) < 3 {
-			return nil, fmt.Errorf(
-				"%s: resource variables must be three parts: TYPE.NAME.ATTR",
-				key)
-		}
+	parts := strings.SplitN(key, ".", 3)
+	if len(parts) < 3 {
+		return nil, fmt.Errorf(
+			"%s: resource variables must be three parts: type.name.attr",
+			key)
 	}
 
 	field := parts[2]
@@ -219,7 +201,6 @@ func NewResourceVariable(key string) (*ResourceVariable, error) {
 	}
 
 	return &ResourceVariable{
-		Mode:  mode,
 		Type:  parts[0],
 		Name:  parts[1],
 		Field: field,
@@ -230,14 +211,7 @@ func NewResourceVariable(key string) (*ResourceVariable, error) {
 }
 
 func (v *ResourceVariable) ResourceId() string {
-	switch v.Mode {
-	case ManagedResourceMode:
-		return fmt.Sprintf("%s.%s", v.Type, v.Name)
-	case DataResourceMode:
-		return fmt.Sprintf("data.%s.%s", v.Type, v.Name)
-	default:
-		panic(fmt.Errorf("unknown resource mode %s", v.Mode))
-	}
+	return fmt.Sprintf("%s.%s", v.Type, v.Name)
 }
 
 func (v *ResourceVariable) FullKey() string {
@@ -282,10 +256,6 @@ func NewUserVariable(key string) (*UserVariable, error) {
 		name = name[:idx]
 	}
 
-	if len(elem) > 0 {
-		return nil, fmt.Errorf("Invalid dot index found: 'var.%s.%s'. Values in maps and lists can be referenced using square bracket indexing, like: 'var.mymap[\"key\"]' or 'var.mylist[1]'.", name, elem)
-	}
-
 	return &UserVariable{
 		key: key,
 
@@ -314,35 +284,18 @@ func DetectVariables(root ast.Node) ([]InterpolatedVariable, error) {
 			return n
 		}
 
-		switch vn := n.(type) {
-		case *ast.VariableAccess:
-			v, err := NewInterpolatedVariable(vn.Name)
-			if err != nil {
-				resultErr = err
-				return n
-			}
-			result = append(result, v)
-		case *ast.Index:
-			if va, ok := vn.Target.(*ast.VariableAccess); ok {
-				v, err := NewInterpolatedVariable(va.Name)
-				if err != nil {
-					resultErr = err
-					return n
-				}
-				result = append(result, v)
-			}
-			if va, ok := vn.Key.(*ast.VariableAccess); ok {
-				v, err := NewInterpolatedVariable(va.Name)
-				if err != nil {
-					resultErr = err
-					return n
-				}
-				result = append(result, v)
-			}
-		default:
+		vn, ok := n.(*ast.VariableAccess)
+		if !ok {
 			return n
 		}
 
+		v, err := NewInterpolatedVariable(vn.Name)
+		if err != nil {
+			resultErr = err
+			return n
+		}
+
+		result = append(result, v)
 		return n
 	}
 

@@ -2,77 +2,13 @@ package terraform
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
 )
 
-func TestNewContextState(t *testing.T) {
-	cases := map[string]struct {
-		Input *ContextOpts
-		Err   bool
-	}{
-		"empty TFVersion": {
-			&ContextOpts{
-				State: &State{},
-			},
-			false,
-		},
-
-		"past TFVersion": {
-			&ContextOpts{
-				State: &State{TFVersion: "0.1.2"},
-			},
-			false,
-		},
-
-		"equal TFVersion": {
-			&ContextOpts{
-				State: &State{TFVersion: Version},
-			},
-			false,
-		},
-
-		"future TFVersion": {
-			&ContextOpts{
-				State: &State{TFVersion: "99.99.99"},
-			},
-			true,
-		},
-
-		"future TFVersion, allowed": {
-			&ContextOpts{
-				State:              &State{TFVersion: "99.99.99"},
-				StateFutureAllowed: true,
-			},
-			false,
-		},
-	}
-
-	for k, tc := range cases {
-		ctx, err := NewContext(tc.Input)
-		if (err != nil) != tc.Err {
-			t.Fatalf("%s: err: %s", k, err)
-		}
-		if err != nil {
-			continue
-		}
-
-		// Version should always be set to our current
-		if ctx.state.TFVersion != Version {
-			t.Fatalf("%s: state not set to current version", k)
-		}
-	}
-}
-
 func testContext2(t *testing.T, opts *ContextOpts) *Context {
-	ctx, err := NewContext(opts)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	return ctx
+	return NewContext(opts)
 }
 
 func testApplyFn(
@@ -108,12 +44,8 @@ func testDiffFn(
 	info *InstanceInfo,
 	s *InstanceState,
 	c *ResourceConfig) (*InstanceDiff, error) {
-	diff := new(InstanceDiff)
+	var diff InstanceDiff
 	diff.Attributes = make(map[string]*ResourceAttrDiff)
-
-	if s != nil {
-		diff.DestroyTainted = s.Tainted
-	}
 
 	for k, v := range c.Raw {
 		if _, ok := v.(string); !ok {
@@ -167,12 +99,7 @@ func testDiffFn(
 
 		attrDiff := &ResourceAttrDiff{
 			Old: "",
-		}
-
-		if reflect.DeepEqual(v, []interface{}{}) {
-			attrDiff.New = ""
-		} else {
-			attrDiff.New = v.(string)
+			New: v.(string),
 		}
 
 		if k == "require_new" {
@@ -191,21 +118,17 @@ func testDiffFn(
 		}
 	}
 
-	// If we recreate this resource because it's tainted, we keep all attrs
-	if !diff.RequiresNew() {
-		for k, v := range diff.Attributes {
-			if v.NewComputed {
-				continue
-			}
+	for k, v := range diff.Attributes {
+		if v.NewComputed {
+			continue
+		}
 
-			old, ok := s.Attributes[k]
-			if !ok {
-				continue
-			}
-
-			if old == v.New {
-				delete(diff.Attributes, k)
-			}
+		old, ok := s.Attributes[k]
+		if !ok {
+			continue
+		}
+		if old == v.New {
+			delete(diff.Attributes, k)
 		}
 	}
 
@@ -216,7 +139,7 @@ func testDiffFn(
 		}
 	}
 
-	return diff, nil
+	return &diff, nil
 }
 
 func testProvider(prefix string) *MockResourceProvider {
@@ -290,8 +213,9 @@ root
 `
 
 const testContextRefreshModuleStr = `
-aws_instance.web: (tainted)
-  ID = bar
+aws_instance.web: (1 tainted)
+  ID = <not created>
+  Tainted ID 1 = bar
 
 module.child:
   aws_instance.web:
@@ -313,6 +237,7 @@ const testContextRefreshOutputPartialStr = `
 `
 
 const testContextRefreshTaintedStr = `
-aws_instance.web: (tainted)
-  ID = foo
+aws_instance.web: (1 tainted)
+  ID = <not created>
+  Tainted ID 1 = foo
 `

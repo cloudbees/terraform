@@ -466,6 +466,9 @@ func resourceAwsOpsworksSetApplicationSource(d *schema.ResourceData, v *opsworks
 		if v.Revision != nil {
 			m["revision"] = *v.Revision
 		}
+		if v.SshKey != nil {
+			m["ssh_key"] = *v.SshKey
+		}
 		nv = append(nv, m)
 	}
 

@@ -35,7 +35,6 @@ func resourceCLCServer() *schema.Resource {
 			"source_server_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"cpu": &schema.Schema{
 				Type:     schema.TypeInt,
@@ -43,6 +42,10 @@ func resourceCLCServer() *schema.Resource {
 			},
 			"memory_mb": &schema.Schema{
 				Type:     schema.TypeInt,
+				Required: true,
+			},
+			"password": &schema.Schema{
+				Type:     schema.TypeString,
 				Required: true,
 			},
 			// optional
@@ -55,7 +58,6 @@ func resourceCLCServer() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "standard",
-				ForceNew: true,
 			},
 			"network_id": &schema.Schema{
 				Type:     schema.TypeString,
@@ -67,11 +69,6 @@ func resourceCLCServer() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeMap},
 			},
 			"additional_disks": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeMap},
-			},
-			"packages": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeMap},
@@ -89,30 +86,8 @@ func resourceCLCServer() *schema.Resource {
 				Optional: true,
 				Default:  "standard",
 			},
-			"aa_policy_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
-			// optional fields for bareMetal
-			"configuration_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
-			"os_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
 
 			// sorta computed
-			"password": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				Default:  nil,
-			},
 			"private_ip_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -147,18 +122,17 @@ func resourceCLCServer() *schema.Resource {
 func resourceCLCServerCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*clc.Client)
 	spec := server.Server{
-		Name:                 d.Get("name_template").(string),
-		Password:             d.Get("password").(string),
-		Description:          d.Get("description").(string),
-		GroupID:              d.Get("group_id").(string),
-		CPU:                  d.Get("cpu").(int),
-		MemoryGB:             d.Get("memory_mb").(int) / 1024,
-		SourceServerID:       d.Get("source_server_id").(string),
-		Type:                 d.Get("type").(string),
-		IPaddress:            d.Get("private_ip_address").(string),
-		NetworkID:            d.Get("network_id").(string),
-		Storagetype:          d.Get("storage_type").(string),
-		AntiAffinityPolicyID: d.Get("aa_policy_id").(string),
+		Name:           d.Get("name_template").(string),
+		Password:       d.Get("password").(string),
+		Description:    d.Get("description").(string),
+		GroupID:        d.Get("group_id").(string),
+		CPU:            d.Get("cpu").(int),
+		MemoryGB:       d.Get("memory_mb").(int) / 1024,
+		SourceServerID: d.Get("source_server_id").(string),
+		Type:           d.Get("type").(string),
+		IPaddress:      d.Get("private_ip_address").(string),
+		NetworkID:      d.Get("network_id").(string),
+		Storagetype:    d.Get("storage_type").(string),
 	}
 
 	var err error
@@ -172,22 +146,6 @@ func resourceCLCServerCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed setting customfields: %v", err)
 	}
 	spec.Customfields = fields
-
-	pkgs, err := parsePackages(d)
-	if err != nil {
-		return fmt.Errorf("Failed setting packages: %v", err)
-	}
-	spec.Packages = pkgs
-
-	if spec.Type == "bareMetal" {
-		// additional bareMetal fields
-		if conf_id := d.Get("configuration_id").(string); conf_id != "" {
-			spec.ConfigurationID = conf_id
-		}
-		if os_type := d.Get("os_type").(string); os_type != "" {
-			spec.OSType = os_type
-		}
-	}
 
 	resp, err := client.Server.Create(spec)
 	if err != nil || !resp.IsQueued {
@@ -237,12 +195,6 @@ func resourceCLCServerRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("storage_type", s.Storagetype)
 	d.Set("created_date", s.ChangeInfo.CreatedDate)
 	d.Set("modified_date", s.ChangeInfo.ModifiedDate)
-
-	creds, err := client.Server.GetCredentials(d.Id())
-	if err != nil {
-		return err
-	}
-	d.Set("password", creds.Password)
 	return nil
 }
 
@@ -279,8 +231,8 @@ func resourceCLCServerUpdate(d *schema.ResourceData, meta interface{}) error {
 	// updates are queue processed
 	if d.HasChange("password") {
 		d.SetPartial("password")
-		creds, _ := client.Server.GetCredentials(id)
-		old := creds.Password
+		o, _ := d.GetChange("password")
+		old := o.(string)
 		pass := d.Get("password").(string)
 		updates = append(updates, server.UpdateCredentials(old, pass))
 	}
@@ -351,7 +303,7 @@ func resourceCLCServerUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Partial(false)
-	return resourceCLCServerRead(d, meta)
+	return nil
 }
 
 func resourceCLCServerDelete(d *schema.ResourceData, meta interface{}) error {

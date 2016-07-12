@@ -5,8 +5,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/arm/cdn"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -18,26 +20,26 @@ func resourceArmCdnProfile() *schema.Resource {
 		Delete: resourceArmCdnProfileDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"location": {
+			"location": &schema.Schema{
 				Type:      schema.TypeString,
 				Required:  true,
 				ForceNew:  true,
 				StateFunc: azureRMNormalizeLocation,
 			},
 
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"sku": {
+			"sku": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -73,20 +75,23 @@ func resourceArmCdnProfileCreate(d *schema.ResourceData, meta interface{}) error
 		Tags:       expandTags(tags),
 	}
 
-	_, err := cdnProfilesClient.Create(name, cdnProfile, resGroup, make(chan struct{}))
+	resp, err := cdnProfilesClient.Create(name, cdnProfile, resGroup)
 	if err != nil {
 		return err
 	}
 
-	read, err := cdnProfilesClient.Get(name, resGroup)
-	if err != nil {
-		return err
-	}
-	if read.ID == nil {
-		return fmt.Errorf("Cannot read CND Profile %s (resource group %s) ID", name, resGroup)
-	}
+	d.SetId(*resp.ID)
 
-	d.SetId(*read.ID)
+	log.Printf("[DEBUG] Waiting for CDN Profile (%s) to become available", name)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"Accepted", "Updating", "Creating"},
+		Target:  []string{"Succeeded"},
+		Refresh: cdnProfileStateRefreshFunc(client, resGroup, name),
+		Timeout: 10 * time.Minute,
+	}
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting for CDN Profile (%s) to become available: %s", name, err)
+	}
 
 	return resourceArmCdnProfileRead(d, meta)
 }
@@ -152,9 +157,19 @@ func resourceArmCdnProfileDelete(d *schema.ResourceData, meta interface{}) error
 	resGroup := id.ResourceGroup
 	name := id.Path["Profiles"]
 
-	_, err = cdnProfilesClient.DeleteIfExists(name, resGroup, make(chan struct{}))
+	_, err = cdnProfilesClient.DeleteIfExists(name, resGroup)
 
 	return err
+}
+
+func cdnProfileStateRefreshFunc(client *ArmClient, resourceGroupName string, cdnProfileName string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		res, err := client.cdnProfilesClient.Get(cdnProfileName, resourceGroupName)
+		if err != nil {
+			return nil, "", fmt.Errorf("Error issuing read request in cdnProfileStateRefreshFunc to Azure ARM for CND Profile '%s' (RG: '%s'): %s", cdnProfileName, resourceGroupName, err)
+		}
+		return res, string(res.Properties.ProvisioningState), nil
+	}
 }
 
 func validateCdnProfileSku(v interface{}, k string) (ws []string, errors []error) {

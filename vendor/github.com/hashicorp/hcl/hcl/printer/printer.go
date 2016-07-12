@@ -60,8 +60,5 @@ func Format(src []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// Add trailing newline to result
-	buf.WriteString("\n")
-
 	return buf.Bytes(), nil
 }

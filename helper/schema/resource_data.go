@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"log"
 	"reflect"
 	"strings"
 	"sync"
@@ -23,7 +22,6 @@ type ResourceData struct {
 	config *terraform.ResourceConfig
 	state  *terraform.InstanceState
 	diff   *terraform.InstanceDiff
-	meta   map[string]string
 
 	// Don't set
 	multiReader *MultiLevelFieldReader
@@ -45,14 +43,7 @@ type getResult struct {
 	Schema         *Schema
 }
 
-// UnsafeSetFieldRaw allows setting arbitrary values in state to arbitrary
-// values, bypassing schema. This MUST NOT be used in normal circumstances -
-// it exists only to support the remote_state data source.
-func (d *ResourceData) UnsafeSetFieldRaw(key string, value string) {
-	d.once.Do(d.init)
-
-	d.setWriter.unsafeWriteField(key, value)
-}
+var getResultEmpty getResult
 
 // Get returns the data for the given key, or nil if the key doesn't exist
 // in the schema.
@@ -230,35 +221,16 @@ func (d *ResourceData) SetConnInfo(v map[string]string) {
 	d.newState.Ephemeral.ConnInfo = v
 }
 
-// SetType sets the ephemeral type for the data. This is only required
-// for importing.
-func (d *ResourceData) SetType(t string) {
-	d.once.Do(d.init)
-	d.newState.Ephemeral.Type = t
-}
-
 // State returns the new InstanceState after the diff and any Set
 // calls.
 func (d *ResourceData) State() *terraform.InstanceState {
 	var result terraform.InstanceState
 	result.ID = d.Id()
-	result.Meta = d.meta
 
 	// If we have no ID, then this resource doesn't exist and we just
 	// return nil.
 	if result.ID == "" {
 		return nil
-	}
-
-	// Look for a magic key in the schema that determines we skip the
-	// integrity check of fields existing in the schema, allowing dynamic
-	// keys to be created.
-	hasDynamicAttributes := false
-	for k, _ := range d.schema {
-		if k == "__has_dynamic_attributes" {
-			hasDynamicAttributes = true
-			log.Printf("[INFO] Resource %s has dynamic attributes", result.ID)
-		}
 	}
 
 	// In order to build the final state attributes, we read the full
@@ -282,30 +254,13 @@ func (d *ResourceData) State() *terraform.InstanceState {
 			}
 		}
 	}
-
 	mapW := &MapFieldWriter{Schema: d.schema}
 	if err := mapW.WriteField(nil, rawMap); err != nil {
 		return nil
 	}
 
 	result.Attributes = mapW.Map()
-
-	if hasDynamicAttributes {
-		// If we have dynamic attributes, just copy the attributes map
-		// one for one into the result attributes.
-		for k, v := range d.setWriter.Map() {
-			// Don't clobber schema values. This limits usage of dynamic
-			// attributes to names which _do not_ conflict with schema
-			// keys!
-			if _, ok := result.Attributes[k]; !ok {
-				result.Attributes[k] = v
-			}
-		}
-	}
-
-	if d.newState != nil {
-		result.Ephemeral = d.newState.Ephemeral
-	}
+	result.Ephemeral.ConnInfo = d.ConnInfo()
 
 	// TODO: This is hacky and we can remove this when we have a proper
 	// state writer. We should instead have a proper StateFieldWriter
@@ -324,10 +279,6 @@ func (d *ResourceData) State() *terraform.InstanceState {
 		result.Attributes["id"] = d.Id()
 	}
 
-	if d.state != nil {
-		result.Tainted = d.state.Tainted
-	}
-
 	return &result
 }
 
@@ -335,7 +286,7 @@ func (d *ResourceData) init() {
 	// Initialize the field that will store our new state
 	var copyState terraform.InstanceState
 	if d.state != nil {
-		copyState = *d.state.DeepCopy()
+		copyState = *d.state
 	}
 	d.newState = &copyState
 

@@ -76,36 +76,6 @@ func TestStateAddModule(t *testing.T) {
 	}
 }
 
-func TestStateOutputTypeRoundTrip(t *testing.T) {
-	state := &State{
-		Modules: []*ModuleState{
-			&ModuleState{
-				Path: RootModulePath,
-				Outputs: map[string]*OutputState{
-					"string_output": &OutputState{
-						Value: "String Value",
-						Type:  "string",
-					},
-				},
-			},
-		},
-	}
-
-	buf := new(bytes.Buffer)
-	if err := WriteState(state, buf); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	roundTripped, err := ReadState(buf)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	if !reflect.DeepEqual(state, roundTripped) {
-		t.Fatalf("bad: %#v", roundTripped)
-	}
-}
-
 func TestStateModuleOrphans(t *testing.T) {
 	state := &State{
 		Modules: []*ModuleState{
@@ -202,35 +172,6 @@ func TestStateModuleOrphans_deepNestedNilConfig(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("bad: %#v", actual)
-	}
-}
-
-func TestStateDeepCopy(t *testing.T) {
-	cases := []struct {
-		One, Two *State
-		F        func(*State) interface{}
-	}{
-		// Version
-		{
-			&State{Version: 5},
-			&State{Version: 5},
-			func(s *State) interface{} { return s.Version },
-		},
-
-		// TFVersion
-		{
-			&State{TFVersion: "5"},
-			&State{TFVersion: "5"},
-			func(s *State) interface{} { return s.TFVersion },
-		},
-	}
-
-	for i, tc := range cases {
-		actual := tc.F(tc.One.DeepCopy())
-		expected := tc.F(tc.Two)
-		if !reflect.DeepEqual(actual, expected) {
-			t.Fatalf("Bad: %d\n\n%s\n\n%s", i, actual, expected)
-		}
 	}
 }
 
@@ -338,156 +279,6 @@ func TestStateEqual(t *testing.T) {
 	}
 }
 
-func TestStateCompareAges(t *testing.T) {
-	cases := []struct {
-		Result   StateAgeComparison
-		Err      bool
-		One, Two *State
-	}{
-		{
-			StateAgeEqual, false,
-			&State{
-				Lineage: "1",
-				Serial:  2,
-			},
-			&State{
-				Lineage: "1",
-				Serial:  2,
-			},
-		},
-		{
-			StateAgeReceiverOlder, false,
-			&State{
-				Lineage: "1",
-				Serial:  2,
-			},
-			&State{
-				Lineage: "1",
-				Serial:  3,
-			},
-		},
-		{
-			StateAgeReceiverNewer, false,
-			&State{
-				Lineage: "1",
-				Serial:  3,
-			},
-			&State{
-				Lineage: "1",
-				Serial:  2,
-			},
-		},
-		{
-			StateAgeEqual, true,
-			&State{
-				Lineage: "1",
-				Serial:  2,
-			},
-			&State{
-				Lineage: "2",
-				Serial:  2,
-			},
-		},
-		{
-			StateAgeEqual, true,
-			&State{
-				Lineage: "1",
-				Serial:  3,
-			},
-			&State{
-				Lineage: "2",
-				Serial:  2,
-			},
-		},
-	}
-
-	for i, tc := range cases {
-		result, err := tc.One.CompareAges(tc.Two)
-
-		if err != nil && !tc.Err {
-			t.Errorf(
-				"%d: got error, but want success\n\n%s\n\n%s",
-				i, tc.One, tc.Two,
-			)
-			continue
-		}
-
-		if err == nil && tc.Err {
-			t.Errorf(
-				"%d: got success, but want error\n\n%s\n\n%s",
-				i, tc.One, tc.Two,
-			)
-			continue
-		}
-
-		if result != tc.Result {
-			t.Errorf(
-				"%d: got result %d, but want %d\n\n%s\n\n%s",
-				i, result, tc.Result, tc.One, tc.Two,
-			)
-			continue
-		}
-	}
-}
-
-func TestStateSameLineage(t *testing.T) {
-	cases := []struct {
-		Result   bool
-		One, Two *State
-	}{
-		{
-			true,
-			&State{
-				Lineage: "1",
-			},
-			&State{
-				Lineage: "1",
-			},
-		},
-		{
-			// Empty lineage is compatible with all
-			true,
-			&State{
-				Lineage: "",
-			},
-			&State{
-				Lineage: "1",
-			},
-		},
-		{
-			// Empty lineage is compatible with all
-			true,
-			&State{
-				Lineage: "1",
-			},
-			&State{
-				Lineage: "",
-			},
-		},
-		{
-			false,
-			&State{
-				Lineage: "1",
-			},
-			&State{
-				Lineage: "2",
-			},
-		},
-	}
-
-	for i, tc := range cases {
-		result := tc.One.SameLineage(tc.Two)
-
-		if result != tc.Result {
-			t.Errorf(
-				"%d: got %v, but want %v\n\n%s\n\n%s",
-				i, result, tc.Result, tc.One, tc.Two,
-			)
-			continue
-		}
-	}
-}
-
 func TestStateIncrementSerialMaybe(t *testing.T) {
 	cases := map[string]struct {
 		S1, S2 *State
@@ -557,288 +348,12 @@ func TestStateIncrementSerialMaybe(t *testing.T) {
 			},
 			5,
 		},
-		"S2 has a different TFVersion": {
-			&State{TFVersion: "0.1"},
-			&State{TFVersion: "0.2"},
-			1,
-		},
 	}
 
 	for name, tc := range cases {
 		tc.S1.IncrementSerialMaybe(tc.S2)
 		if tc.S1.Serial != tc.Serial {
 			t.Fatalf("Bad: %s\nGot: %d", name, tc.S1.Serial)
-		}
-	}
-}
-
-func TestStateRemove(t *testing.T) {
-	cases := map[string]struct {
-		Address  string
-		One, Two *State
-	}{
-		"simple resource": {
-			"test_instance.foo",
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path:      rootModulePath,
-						Resources: map[string]*ResourceState{},
-					},
-				},
-			},
-		},
-
-		"single instance": {
-			"test_instance.foo.primary",
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path:      rootModulePath,
-						Resources: map[string]*ResourceState{},
-					},
-				},
-			},
-		},
-
-		"single instance in multi-count": {
-			"test_instance.foo[0]",
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo.0": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-
-							"test_instance.foo.1": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo.1": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-
-		"single resource, multi-count": {
-			"test_instance.foo",
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo.0": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-
-							"test_instance.foo.1": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path:      rootModulePath,
-						Resources: map[string]*ResourceState{},
-					},
-				},
-			},
-		},
-
-		"full module": {
-			"module.foo",
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-
-					&ModuleState{
-						Path: []string{"root", "foo"},
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-
-							"test_instance.bar": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-
-		"module and children": {
-			"module.foo",
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-
-					&ModuleState{
-						Path: []string{"root", "foo"},
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-
-							"test_instance.bar": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-
-					&ModuleState{
-						Path: []string{"root", "foo", "bar"},
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-
-							"test_instance.bar": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-			&State{
-				Modules: []*ModuleState{
-					&ModuleState{
-						Path: rootModulePath,
-						Resources: map[string]*ResourceState{
-							"test_instance.foo": &ResourceState{
-								Type: "test_instance",
-								Primary: &InstanceState{
-									ID: "foo",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for k, tc := range cases {
-		if err := tc.One.Remove(tc.Address); err != nil {
-			t.Fatalf("bad: %s\n\n%s", k, err)
-		}
-
-		if !tc.One.Equal(tc.Two) {
-			t.Fatalf("Bad: %s\n\n%s\n\n%s", k, tc.One.String(), tc.Two.String())
 		}
 	}
 }
@@ -891,14 +406,11 @@ func TestResourceStateEqual(t *testing.T) {
 		{
 			false,
 			&ResourceState{
-				Primary: &InstanceState{
-					ID: "foo",
-				},
+				Tainted: nil,
 			},
 			&ResourceState{
-				Primary: &InstanceState{
-					ID:      "foo",
-					Tainted: true,
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
 				},
 			},
 		},
@@ -906,15 +418,28 @@ func TestResourceStateEqual(t *testing.T) {
 		{
 			true,
 			&ResourceState{
-				Primary: &InstanceState{
-					ID:      "foo",
-					Tainted: true,
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
 				},
 			},
 			&ResourceState{
-				Primary: &InstanceState{
-					ID:      "foo",
-					Tainted: true,
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
+				},
+			},
+		},
+
+		{
+			true,
+			&ResourceState{
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
+					nil,
+				},
+			},
+			&ResourceState{
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
 				},
 			},
 		},
@@ -940,29 +465,28 @@ func TestResourceStateTaint(t *testing.T) {
 			&ResourceState{},
 		},
 
-		"primary, not tainted": {
+		"primary, no tainted": {
 			&ResourceState{
 				Primary: &InstanceState{ID: "foo"},
 			},
 			&ResourceState{
-				Primary: &InstanceState{
-					ID:      "foo",
-					Tainted: true,
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
 				},
 			},
 		},
 
-		"primary, tainted": {
+		"primary, with tainted": {
 			&ResourceState{
-				Primary: &InstanceState{
-					ID:      "foo",
-					Tainted: true,
+				Primary: &InstanceState{ID: "foo"},
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "bar"},
 				},
 			},
 			&ResourceState{
-				Primary: &InstanceState{
-					ID:      "foo",
-					Tainted: true,
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "bar"},
+					&InstanceState{ID: "foo"},
 				},
 			},
 		},
@@ -981,36 +505,92 @@ func TestResourceStateTaint(t *testing.T) {
 func TestResourceStateUntaint(t *testing.T) {
 	cases := map[string]struct {
 		Input          *ResourceState
+		Index          func() int
 		ExpectedOutput *ResourceState
+		ExpectedErrMsg string
 	}{
-		"no primary, err": {
+		"no primary, no tainted, err": {
 			Input:          &ResourceState{},
 			ExpectedOutput: &ResourceState{},
+			ExpectedErrMsg: "Nothing to untaint",
 		},
 
-		"primary, not tainted": {
+		"one tainted, no primary": {
 			Input: &ResourceState{
-				Primary: &InstanceState{ID: "foo"},
-			},
-			ExpectedOutput: &ResourceState{
-				Primary: &InstanceState{ID: "foo"},
-			},
-		},
-		"primary, tainted": {
-			Input: &ResourceState{
-				Primary: &InstanceState{
-					ID:      "foo",
-					Tainted: true,
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
 				},
 			},
 			ExpectedOutput: &ResourceState{
 				Primary: &InstanceState{ID: "foo"},
+				Tainted: []*InstanceState{},
 			},
+		},
+
+		"one tainted, existing primary error": {
+			Input: &ResourceState{
+				Primary: &InstanceState{ID: "foo"},
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "foo"},
+				},
+			},
+			ExpectedErrMsg: "Resource has a primary",
+		},
+
+		"multiple tainted, no index": {
+			Input: &ResourceState{
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "bar"},
+					&InstanceState{ID: "foo"},
+				},
+			},
+			ExpectedErrMsg: "please specify an index",
+		},
+
+		"multiple tainted, with index": {
+			Input: &ResourceState{
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "bar"},
+					&InstanceState{ID: "foo"},
+				},
+			},
+			Index: func() int { return 1 },
+			ExpectedOutput: &ResourceState{
+				Primary: &InstanceState{ID: "foo"},
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "bar"},
+				},
+			},
+		},
+
+		"index out of bounds error": {
+			Input: &ResourceState{
+				Tainted: []*InstanceState{
+					&InstanceState{ID: "bar"},
+					&InstanceState{ID: "foo"},
+				},
+			},
+			Index:          func() int { return 2 },
+			ExpectedErrMsg: "out of range",
 		},
 	}
 
 	for k, tc := range cases {
-		tc.Input.Untaint()
+		index := -1
+		if tc.Index != nil {
+			index = tc.Index()
+		}
+		err := tc.Input.Untaint(index)
+		if tc.ExpectedErrMsg == "" && err != nil {
+			t.Fatalf("[%s] unexpected err: %s", k, err)
+		}
+		if tc.ExpectedErrMsg != "" {
+			if strings.Contains(err.Error(), tc.ExpectedErrMsg) {
+				continue
+			}
+			t.Fatalf("[%s] expected err: %s to contain: %s",
+				k, err, tc.ExpectedErrMsg)
+		}
 		if !reflect.DeepEqual(tc.Input, tc.ExpectedOutput) {
 			t.Fatalf(
 				"Failure: %s\n\nExpected: %#v\n\nGot: %#v",
@@ -1136,34 +716,6 @@ func TestStateEmpty(t *testing.T) {
 	}
 }
 
-func TestStateFromFutureTerraform(t *testing.T) {
-	cases := []struct {
-		In     string
-		Result bool
-	}{
-		{
-			"",
-			false,
-		},
-		{
-			"0.1",
-			false,
-		},
-		{
-			"999.15.1",
-			true,
-		},
-	}
-
-	for _, tc := range cases {
-		state := &State{TFVersion: tc.In}
-		actual := state.FromFutureTerraform()
-		if actual != tc.Result {
-			t.Fatalf("%s: bad: %v", tc.In, actual)
-		}
-	}
-}
-
 func TestStateIsRemote(t *testing.T) {
 	cases := []struct {
 		In     *State
@@ -1236,7 +788,7 @@ func TestInstanceState_MergeDiff(t *testing.T) {
 }
 
 func TestInstanceState_MergeDiff_nil(t *testing.T) {
-	var is *InstanceState
+	var is *InstanceState = nil
 
 	diff := &InstanceDiff{
 		Attributes: map[string]*ResourceAttrDiff{
@@ -1274,6 +826,36 @@ func TestInstanceState_MergeDiff_nilDiff(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, is2.Attributes) {
 		t.Fatalf("bad: %#v", is2.Attributes)
+	}
+}
+
+func TestReadUpgradeState(t *testing.T) {
+	state := &StateV1{
+		Resources: map[string]*ResourceStateV1{
+			"foo": &ResourceStateV1{
+				ID: "bar",
+			},
+		},
+	}
+	buf := new(bytes.Buffer)
+	if err := testWriteStateV1(state, buf); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// ReadState should transparently detect the old
+	// version and upgrade up so the latest.
+	actual, err := ReadState(buf)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	upgraded, err := upgradeV1State(state)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if !reflect.DeepEqual(actual, upgraded) {
+		t.Fatalf("bad: %#v", actual)
 	}
 }
 
@@ -1353,98 +935,77 @@ func TestReadStateNewVersion(t *testing.T) {
 	}
 }
 
-func TestReadStateTFVersion(t *testing.T) {
-	type tfVersion struct {
-		Version   int    `json:"version"`
-		TFVersion string `json:"terraform_version"`
-	}
-
-	cases := []struct {
-		Written string
-		Read    string
-		Err     bool
-	}{
-		{
-			"0.0.0",
-			"0.0.0",
-			false,
+func TestUpgradeV1State(t *testing.T) {
+	old := &StateV1{
+		Outputs: map[string]string{
+			"ip": "127.0.0.1",
 		},
-		{
-			"",
-			"",
-			false,
+		Resources: map[string]*ResourceStateV1{
+			"foo": &ResourceStateV1{
+				Type: "test_resource",
+				ID:   "bar",
+				Attributes: map[string]string{
+					"key": "val",
+				},
+			},
+			"bar": &ResourceStateV1{
+				Type: "test_resource",
+				ID:   "1234",
+				Attributes: map[string]string{
+					"a": "b",
+				},
+			},
 		},
-		{
-			"bad",
-			"",
-			true,
+		Tainted: map[string]struct{}{
+			"bar": struct{}{},
 		},
 	}
-
-	for _, tc := range cases {
-		buf, err := json.Marshal(&tfVersion{
-			Version:   2,
-			TFVersion: tc.Written,
-		})
-		if err != nil {
-			t.Fatalf("err: %v", err)
-		}
-
-		s, err := ReadState(bytes.NewReader(buf))
-		if (err != nil) != tc.Err {
-			t.Fatalf("%s: err: %s", tc.Written, err)
-		}
-		if err != nil {
-			continue
-		}
-
-		if s.TFVersion != tc.Read {
-			t.Fatalf("%s: bad: %s", tc.Written, s.TFVersion)
-		}
-	}
-}
-
-func TestWriteStateTFVersion(t *testing.T) {
-	cases := []struct {
-		Write string
-		Read  string
-		Err   bool
-	}{
-		{
-			"0.0.0",
-			"0.0.0",
-			false,
-		},
-		{
-			"",
-			"",
-			false,
-		},
-		{
-			"bad",
-			"",
-			true,
-		},
+	state, err := upgradeV1State(old)
+	if err != nil {
+		t.Fatalf("err: %v", err)
 	}
 
-	for _, tc := range cases {
-		var buf bytes.Buffer
-		err := WriteState(&State{TFVersion: tc.Write}, &buf)
-		if (err != nil) != tc.Err {
-			t.Fatalf("%s: err: %s", tc.Write, err)
-		}
-		if err != nil {
-			continue
-		}
+	if len(state.Modules) != 1 {
+		t.Fatalf("should only have root module: %#v", state.Modules)
+	}
+	root := state.RootModule()
 
-		s, err := ReadState(&buf)
-		if err != nil {
-			t.Fatalf("%s: err: %s", tc.Write, err)
-		}
+	if len(root.Outputs) != 1 {
+		t.Fatalf("bad outputs: %v", root.Outputs)
+	}
+	if root.Outputs["ip"] != "127.0.0.1" {
+		t.Fatalf("bad outputs: %v", root.Outputs)
+	}
 
-		if s.TFVersion != tc.Read {
-			t.Fatalf("%s: bad: %s", tc.Write, s.TFVersion)
-		}
+	if len(root.Resources) != 2 {
+		t.Fatalf("bad resources: %v", root.Resources)
+	}
+
+	foo := root.Resources["foo"]
+	if foo.Type != "test_resource" {
+		t.Fatalf("bad: %#v", foo)
+	}
+	if foo.Primary == nil || foo.Primary.ID != "bar" ||
+		foo.Primary.Attributes["key"] != "val" {
+		t.Fatalf("bad: %#v", foo)
+	}
+	if len(foo.Tainted) > 0 {
+		t.Fatalf("bad: %#v", foo)
+	}
+
+	bar := root.Resources["bar"]
+	if bar.Type != "test_resource" {
+		t.Fatalf("bad: %#v", bar)
+	}
+	if bar.Primary != nil {
+		t.Fatalf("bad: %#v", bar)
+	}
+	if len(bar.Tainted) != 1 {
+		t.Fatalf("bad: %#v", bar)
+	}
+	bt := bar.Tainted[0]
+	if bt.ID != "1234" || bt.Attributes["a"] != "b" {
+		t.Fatalf("bad: %#v", bt)
 	}
 }
 
@@ -1457,7 +1018,6 @@ func TestParseResourceStateKey(t *testing.T) {
 		{
 			Input: "aws_instance.foo.3",
 			Expected: &ResourceStateKey{
-				Mode:  config.ManagedResourceMode,
 				Type:  "aws_instance",
 				Name:  "foo",
 				Index: 3,
@@ -1466,7 +1026,6 @@ func TestParseResourceStateKey(t *testing.T) {
 		{
 			Input: "aws_instance.foo.0",
 			Expected: &ResourceStateKey{
-				Mode:  config.ManagedResourceMode,
 				Type:  "aws_instance",
 				Name:  "foo",
 				Index: 0,
@@ -1475,17 +1034,7 @@ func TestParseResourceStateKey(t *testing.T) {
 		{
 			Input: "aws_instance.foo",
 			Expected: &ResourceStateKey{
-				Mode:  config.ManagedResourceMode,
 				Type:  "aws_instance",
-				Name:  "foo",
-				Index: -1,
-			},
-		},
-		{
-			Input: "data.aws_ami.foo",
-			Expected: &ResourceStateKey{
-				Mode:  config.DataResourceMode,
-				Type:  "aws_ami",
 				Name:  "foo",
 				Index: -1,
 			},

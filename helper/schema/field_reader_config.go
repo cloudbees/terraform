@@ -100,8 +100,7 @@ func (r *ConfigFieldReader) readField(
 func (r *ConfigFieldReader) readMap(k string) (FieldReadResult, error) {
 	// We want both the raw value and the interpolated. We use the interpolated
 	// to store actual values and we use the raw one to check for
-	// computed keys. Actual values are obtained in the switch, depending on
-	// the type of the raw value.
+	// computed keys.
 	mraw, ok := r.Config.GetRaw(k)
 	if !ok {
 		return FieldReadResult{}, nil
@@ -110,25 +109,6 @@ func (r *ConfigFieldReader) readMap(k string) (FieldReadResult, error) {
 	result := make(map[string]interface{})
 	computed := false
 	switch m := mraw.(type) {
-	case string:
-		// This is a map which has come out of an interpolated variable, so we
-		// can just get the value directly from config. Values cannot be computed
-		// currently.
-		v, _ := r.Config.Get(k)
-
-		// If this isn't a map[string]interface, it must be computed.
-		mapV, ok := v.(map[string]interface{})
-		if !ok {
-			return FieldReadResult{
-				Exists:   true,
-				Computed: true,
-			}, nil
-		}
-
-		// Otherwise we can proceed as usual.
-		for i, iv := range mapV {
-			result[i] = iv
-		}
 	case []interface{}:
 		for i, innerRaw := range m {
 			for ik := range innerRaw.(map[string]interface{}) {

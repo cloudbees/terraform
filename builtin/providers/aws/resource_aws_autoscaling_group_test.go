@@ -555,7 +555,7 @@ resource "aws_launch_configuration" "foobar" {
 }
 
 resource "aws_placement_group" "test" {
-  name = "asg_pg_%s"
+  name = "%s"
   strategy = "cluster"
 }
 

@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"math"
 	"time"
@@ -107,9 +109,7 @@ func (conf *StateChangeConf) WaitForState() (interface{}, error) {
 				// not finding it for awhile, and if so, report an error.
 				notfoundTick += 1
 				if notfoundTick > conf.NotFoundChecks {
-					resulterr = &NotFoundError{
-						LastError: resulterr,
-					}
+					resulterr = errors.New("couldn't find resource")
 					return
 				}
 			} else {
@@ -138,11 +138,10 @@ func (conf *StateChangeConf) WaitForState() (interface{}, error) {
 				}
 
 				if !found {
-					resulterr = &UnexpectedStateError{
-						LastError:     resulterr,
-						State:         currentState,
-						ExpectedState: conf.Target,
-					}
+					resulterr = fmt.Errorf(
+						"unexpected state '%s', wanted target '%s'",
+						currentState,
+						conf.Target)
 					return
 				}
 			}
@@ -153,9 +152,8 @@ func (conf *StateChangeConf) WaitForState() (interface{}, error) {
 	case <-doneCh:
 		return result, resulterr
 	case <-time.After(conf.Timeout):
-		return nil, &TimeoutError{
-			LastError:     resulterr,
-			ExpectedState: conf.Target,
-		}
+		return nil, fmt.Errorf(
+			"timeout while waiting for state to become '%s'",
+			conf.Target)
 	}
 }

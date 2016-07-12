@@ -399,8 +399,9 @@ aws_instance.foo:
 `
 
 const testTerraformApplyProvisionerFailStr = `
-aws_instance.bar: (tainted)
-  ID = foo
+aws_instance.bar: (1 tainted)
+  ID = <not created>
+  Tainted ID 1 = foo
 aws_instance.foo:
   ID = foo
   num = 2
@@ -408,8 +409,9 @@ aws_instance.foo:
 `
 
 const testTerraformApplyProvisionerFailCreateStr = `
-aws_instance.bar: (tainted)
-  ID = foo
+aws_instance.bar: (1 tainted)
+  ID = <not created>
+  Tainted ID 1 = foo
 `
 
 const testTerraformApplyProvisionerFailCreateNoIdStr = `
@@ -417,10 +419,10 @@ const testTerraformApplyProvisionerFailCreateNoIdStr = `
 `
 
 const testTerraformApplyProvisionerFailCreateBeforeDestroyStr = `
-aws_instance.bar: (1 deposed)
+aws_instance.bar: (1 tainted)
   ID = bar
   require_new = abc
-  Deposed ID 1 = foo (tainted)
+  Tainted ID 1 = foo
 `
 
 const testTerraformApplyProvisionerResourceRefStr = `
@@ -590,7 +592,7 @@ aws_instance.foo:
 
 Outputs:
 
-foo_num = [bar,bar,bar]
+foo_num = bar,bar,bar
 `
 
 const testTerraformApplyOutputMultiStr = `
@@ -1240,8 +1242,9 @@ DESTROY/CREATE: aws_instance.bar
 
 STATE:
 
-aws_instance.bar: (tainted)
-  ID = baz
+aws_instance.bar: (1 tainted)
+  ID = <not created>
+  Tainted ID 1 = baz
 aws_instance.foo:
   ID = bar
   num = 2

@@ -5,8 +5,6 @@ import (
 	"log"
 	"strings"
 
-	"regexp"
-
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -19,54 +17,34 @@ func resourceArmStorageContainer() *schema.Resource {
 		Delete: resourceArmStorageContainerDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validateArmStorageContainerName,
-			},
-			"resource_group_name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"storage_account_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"container_access_type": {
+			"storage_account_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"container_access_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				Default:      "private",
 				ValidateFunc: validateArmStorageContainerAccessType,
 			},
-			"properties": {
+			"properties": &schema.Schema{
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
 		},
 	}
-}
-
-//Following the naming convention as laid out in the docs
-func validateArmStorageContainerName(v interface{}, k string) (ws []string, errors []error) {
-	value := v.(string)
-	if !regexp.MustCompile(`^[0-9a-z-]+$`).MatchString(value) {
-		errors = append(errors, fmt.Errorf(
-			"only lowercase alphanumeric characters and hyphens allowed in %q: %q",
-			k, value))
-	}
-	if len(value) < 3 || len(value) > 63 {
-		errors = append(errors, fmt.Errorf(
-			"%q must be between 3 and 63 characters: %q", k, value))
-	}
-	if regexp.MustCompile(`^-`).MatchString(value) {
-		errors = append(errors, fmt.Errorf(
-			"%q cannot begin with a hyphen: %q", k, value))
-	}
-	return
 }
 
 func validateArmStorageContainerAccessType(v interface{}, k string) (ws []string, errors []error) {
@@ -89,12 +67,9 @@ func resourceArmStorageContainerCreate(d *schema.ResourceData, meta interface{})
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		return fmt.Errorf("Storage Account %q Not Found", storageAccountName)
 	}
 
 	name := d.Get("name").(string)
@@ -124,14 +99,9 @@ func resourceArmStorageContainerRead(d *schema.ResourceData, meta interface{}) e
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		log.Printf("[DEBUG] Storage account %q not found, removing container %q from state", storageAccountName, d.Id())
-		d.SetId("")
-		return nil
 	}
 
 	name := d.Get("name").(string)
@@ -172,14 +142,9 @@ func resourceArmStorageContainerExists(d *schema.ResourceData, meta interface{})
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return false, err
-	}
-	if !accountExists {
-		log.Printf("[DEBUG] Storage account %q not found, removing container %q from state", storageAccountName, d.Id())
-		d.SetId("")
-		return false, nil
 	}
 
 	name := d.Get("name").(string)
@@ -206,13 +171,9 @@ func resourceArmStorageContainerDelete(d *schema.ResourceData, meta interface{})
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		log.Printf("[INFO]Storage Account %q doesn't exist so the container won't exist", storageAccountName)
-		return nil
 	}
 
 	name := d.Get("name").(string)

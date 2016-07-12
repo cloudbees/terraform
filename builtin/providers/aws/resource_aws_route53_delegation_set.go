@@ -17,9 +17,6 @@ func resourceAwsRoute53DelegationSet() *schema.Resource {
 		Create: resourceAwsRoute53DelegationSetCreate,
 		Read:   resourceAwsRoute53DelegationSetRead,
 		Delete: resourceAwsRoute53DelegationSetDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"reference_name": &schema.Schema{

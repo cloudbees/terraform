@@ -21,36 +21,36 @@ func resourceArmTemplateDeployment() *schema.Resource {
 		Delete: resourceArmTemplateDeploymentDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"template_body": {
+			"template_body": &schema.Schema{
 				Type:      schema.TypeString,
 				Optional:  true,
 				Computed:  true,
 				StateFunc: normalizeJson,
 			},
 
-			"parameters": {
+			"parameters": &schema.Schema{
 				Type:     schema.TypeMap,
 				Optional: true,
 			},
 
-			"outputs": {
+			"outputs": &schema.Schema{
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
 
-			"deployment_mode": {
+			"deployment_mode": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -98,28 +98,19 @@ func resourceArmTemplateDeploymentCreate(d *schema.ResourceData, meta interface{
 	deployment := resources.Deployment{
 		Properties: &properties,
 	}
-
-	_, err := deployClient.CreateOrUpdate(resGroup, name, deployment, make(chan struct{}))
+	resp, err := deployClient.CreateOrUpdate(resGroup, name, deployment)
 	if err != nil {
 		return nil
 	}
 
-	read, err := deployClient.Get(resGroup, name)
-	if err != nil {
-		return err
-	}
-	if read.ID == nil {
-		return fmt.Errorf("Cannot read Template Deployment %s (resource group %s) ID", name, resGroup)
-	}
-
-	d.SetId(*read.ID)
+	d.SetId(*resp.ID)
 
 	log.Printf("[DEBUG] Waiting for Template Deployment (%s) to become available", name)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{"creating", "updating", "accepted", "running"},
 		Target:  []string{"succeeded"},
 		Refresh: templateDeploymentStateRefreshFunc(client, resGroup, name),
-		Timeout: 40 * time.Minute,
+		Timeout: 10 * time.Minute,
 	}
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf("Error waiting for Template Deployment (%s) to become available: %s", name, err)
@@ -184,7 +175,7 @@ func resourceArmTemplateDeploymentDelete(d *schema.ResourceData, meta interface{
 		name = id.Path["Deployments"]
 	}
 
-	_, err = deployClient.Delete(resGroup, name, make(chan struct{}))
+	_, err = deployClient.Delete(resGroup, name)
 	return nil
 }
 

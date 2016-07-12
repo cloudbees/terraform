@@ -79,11 +79,11 @@ Usage: terraform fmt [options] [DIR]
 
 Options:
 
-  -list=true       List files whose formatting differs (always false if using STDIN)
+  -list            List files whose formatting differs (disabled if using STDIN)
 
-  -write=true      Write result to source file instead of STDOUT (always false if using STDIN)
+  -write           Write result to source file instead of STDOUT (disabled if using STDIN)
 
-  -diff=false      Display diffs of formatting changes
+  -diff            Display diffs instead of rewriting files
 
 `
 	return strings.TrimSpace(helpText)

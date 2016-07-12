@@ -59,5 +59,5 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `id` - A unique identifier of the stack.
+* `arn` - A unique identifier of the stack.
 * `outputs` - A list of output structures.

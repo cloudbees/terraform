@@ -49,8 +49,7 @@ func Unquote(s string) (t string, err error) {
 	for len(s) > 0 {
 		// If we're starting a '${}' then let it through un-unquoted.
 		// Specifically: we don't unquote any characters within the `${}`
-		// section, except for escaped quotes and escaped backslashes, which we
-		// handle specifically.
+		// section, except for escaped quotes, which we handle specifically.
 		if s[0] == '$' && len(s) > 1 && s[1] == '{' {
 			buf = append(buf, '$', '{')
 			s = s[2:]
@@ -65,12 +64,10 @@ func Unquote(s string) (t string, err error) {
 
 				s = s[size:]
 
-				// We special case escaped double quotes and escaped backslashes in
-				// interpolations, converting them to their unescaped equivalents.
+				// We special case escaped double quotes in interpolations, converting
+				// them to straight double quotes.
 				if r == '\\' {
-					q, _ := utf8.DecodeRuneInString(s)
-					switch q {
-					case '"', '\\':
+					if q, _ := utf8.DecodeRuneInString(s); q == '"' {
 						continue
 					}
 				}

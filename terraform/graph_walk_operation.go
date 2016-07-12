@@ -14,5 +14,4 @@ const (
 	walkRefresh
 	walkValidate
 	walkDestroy
-	walkImport
 )

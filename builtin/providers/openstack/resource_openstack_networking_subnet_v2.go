@@ -85,7 +85,7 @@ func resourceNetworkingSubnetV2() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
-				Default:  true,
+				Computed: true,
 			},
 			"dns_nameservers": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -155,7 +155,7 @@ func resourceNetworkingSubnetV2Create(d *schema.ResourceData, meta interface{}) 
 	stateConf := &resource.StateChangeConf{
 		Target:     []string{"ACTIVE"},
 		Refresh:    waitForSubnetActive(networkingClient, s.ID),
-		Timeout:    10 * time.Minute,
+		Timeout:    2 * time.Minute,
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
@@ -188,6 +188,7 @@ func resourceNetworkingSubnetV2Read(d *schema.ResourceData, meta interface{}) er
 	d.Set("tenant_id", s.TenantID)
 	d.Set("allocation_pools", s.AllocationPools)
 	d.Set("gateway_ip", s.GatewayIP)
+	d.Set("enable_dhcp", s.EnableDHCP)
 	d.Set("dns_nameservers", s.DNSNameservers)
 	d.Set("host_routes", s.HostRoutes)
 
@@ -256,7 +257,7 @@ func resourceNetworkingSubnetV2Delete(d *schema.ResourceData, meta interface{}) 
 		Pending:    []string{"ACTIVE"},
 		Target:     []string{"DELETED"},
 		Refresh:    waitForSubnetDelete(networkingClient, d.Id()),
-		Timeout:    10 * time.Minute,
+		Timeout:    2 * time.Minute,
 		Delay:      5 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}

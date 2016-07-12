@@ -178,7 +178,7 @@ func resourcesStr(rs []*Resource) string {
 	ks := make([]string, 0, len(rs))
 	mapping := make(map[string]int)
 	for i, r := range rs {
-		k := r.Id()
+		k := fmt.Sprintf("%s[%s]", r.Type, r.Name)
 		ks = append(ks, k)
 		mapping[k] = i
 	}
@@ -190,8 +190,9 @@ func resourcesStr(rs []*Resource) string {
 	for _, i := range order {
 		r := rs[i]
 		result += fmt.Sprintf(
-			"%s (x%s)\n",
-			r.Id(),
+			"%s[%s] (x%s)\n",
+			r.Type,
+			r.Name,
 			r.RawCount.Value())
 
 		ks := make([]string, 0, len(r.RawConfig.Raw))

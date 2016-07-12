@@ -297,11 +297,10 @@ func resourceAwsLambdaFunctionUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	codeUpdate := false
-	if d.HasChange("filename") || d.HasChange("source_code_hash") {
-		name := d.Get("filename").(string)
-		file, err := loadFileContent(name)
+	if v, ok := d.GetOk("filename"); ok && d.HasChange("source_code_hash") {
+		file, err := loadFileContent(v.(string))
 		if err != nil {
-			return fmt.Errorf("Unable to load %q: %s", name, err)
+			return fmt.Errorf("Unable to load %q: %s", v.(string), err)
 		}
 		codeReq.ZipFile = file
 		codeUpdate = true
@@ -313,8 +312,8 @@ func resourceAwsLambdaFunctionUpdate(d *schema.ResourceData, meta interface{}) e
 		codeUpdate = true
 	}
 
+	log.Printf("[DEBUG] Send Update Lambda Function Code request: %#v", codeReq)
 	if codeUpdate {
-		log.Printf("[DEBUG] Send Update Lambda Function Code request: %#v", codeReq)
 		_, err := conn.UpdateFunctionCode(codeReq)
 		if err != nil {
 			return fmt.Errorf("Error modifying Lambda Function Code %s: %s", d.Id(), err)
@@ -353,8 +352,8 @@ func resourceAwsLambdaFunctionUpdate(d *schema.ResourceData, meta interface{}) e
 		configUpdate = true
 	}
 
+	log.Printf("[DEBUG] Send Update Lambda Function Configuration request: %#v", configReq)
 	if configUpdate {
-		log.Printf("[DEBUG] Send Update Lambda Function Configuration request: %#v", configReq)
 		_, err := conn.UpdateFunctionConfiguration(configReq)
 		if err != nil {
 			return fmt.Errorf("Error modifying Lambda Function Configuration %s: %s", d.Id(), err)

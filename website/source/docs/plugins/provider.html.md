@@ -138,10 +138,6 @@ structure. This structure has the following fields:
       optional field is `Update`. If your resource doesn't support update, then
       you may keep that field nil.
 
-  * `Importer` - If this is non-nil, then this resource is
-    [importable](/docs/import/importability.html). It is recommended to
-    implement this.
-
 The CRUD operations in more detail, along with their contracts:
 
   * `Create` - This is called to create a new instance of the resource.

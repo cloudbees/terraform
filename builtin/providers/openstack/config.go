@@ -25,8 +25,6 @@ type Config struct {
 	Insecure         bool
 	EndpointType     string
 	CACertFile       string
-	ClientCertFile   string
-	ClientKeyFile    string
 
 	osClient *gophercloud.ProviderClient
 }
@@ -58,7 +56,6 @@ func (c *Config) loadAndValidate() error {
 		return err
 	}
 
-	config := &tls.Config{}
 	if c.CACertFile != "" {
 
 		caCert, err := ioutil.ReadFile(c.CACertFile)
@@ -68,23 +65,21 @@ func (c *Config) loadAndValidate() error {
 
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
-		config.RootCAs = caCertPool
-	}
-	if c.Insecure {
-		config.InsecureSkipVerify = true
-	}
 
-	if c.ClientCertFile != "" && c.ClientKeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(c.ClientCertFile, c.ClientKeyFile)
-		if err != nil {
-			return err
+		config := &tls.Config{
+			RootCAs: caCertPool,
 		}
 
-		config.Certificates = []tls.Certificate{cert}
-		config.BuildNameToCertificate()
+		transport := &http.Transport{TLSClientConfig: config}
+		client.HTTPClient.Transport = transport
 	}
-	transport := &http.Transport{TLSClientConfig: config}
-	client.HTTPClient.Transport = transport
+
+	if c.Insecure {
+		// Configure custom TLS settings.
+		config := &tls.Config{InsecureSkipVerify: true}
+		transport := &http.Transport{TLSClientConfig: config}
+		client.HTTPClient.Transport = transport
+	}
 
 	err = openstack.Authenticate(client, ao)
 	if err != nil {
@@ -98,13 +93,6 @@ func (c *Config) loadAndValidate() error {
 
 func (c *Config) blockStorageV1Client(region string) (*gophercloud.ServiceClient, error) {
 	return openstack.NewBlockStorageV1(c.osClient, gophercloud.EndpointOpts{
-		Region:       region,
-		Availability: c.getEndpointType(),
-	})
-}
-
-func (c *Config) blockStorageV2Client(region string) (*gophercloud.ServiceClient, error) {
-	return openstack.NewBlockStorageV2(c.osClient, gophercloud.EndpointOpts{
 		Region:       region,
 		Availability: c.getEndpointType(),
 	})

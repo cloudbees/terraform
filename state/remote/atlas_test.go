@@ -87,7 +87,6 @@ func TestAtlasClient_NoConflict(t *testing.T) {
 	if err := terraform.WriteState(state, &stateJson); err != nil {
 		t.Fatalf("err: %s", err)
 	}
-
 	if err := client.Put(stateJson.Bytes()); err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -112,11 +111,7 @@ func TestAtlasClient_LegitimateConflict(t *testing.T) {
 	}
 
 	// Changing the state but not the serial. Should generate a conflict.
-	state.RootModule().Outputs["drift"] = &terraform.OutputState{
-		Type:      "string",
-		Sensitive: false,
-		Value:     "happens",
-	}
+	state.RootModule().Outputs["drift"] = "happens"
 
 	var stateJson bytes.Buffer
 	if err := terraform.WriteState(state, &stateJson); err != nil {
@@ -164,8 +159,8 @@ func TestAtlasClient_UnresolvableConflict(t *testing.T) {
 	select {
 	case <-doneCh:
 		// OK
-	case <-time.After(500 * time.Millisecond):
-		t.Fatalf("Timed out after 500ms, probably because retrying infinitely.")
+	case <-time.After(50 * time.Millisecond):
+		t.Fatalf("Timed out after 50ms, probably because retrying infinitely.")
 	}
 }
 
@@ -250,7 +245,7 @@ func (f *fakeAtlas) handler(resp http.ResponseWriter, req *http.Request) {
 // loads the state.
 var testStateModuleOrderChange = []byte(
 	`{
-    "version": 3,
+    "version": 1,
     "serial": 1,
     "modules": [
         {
@@ -260,11 +255,7 @@ var testStateModuleOrderChange = []byte(
                 "grandchild"
             ],
             "outputs": {
-                "foo": {
-                    "sensitive": false,
-                    "type": "string",
-                    "value": "bar"
-                }
+                "foo": "bar2"
             },
             "resources": null
         },
@@ -275,11 +266,7 @@ var testStateModuleOrderChange = []byte(
                 "grandchild"
             ],
             "outputs": {
-                "foo": {
-                    "sensitive": false,
-                    "type": "string",
-                    "value": "bar"
-                }
+                "foo": "bar1"
             },
             "resources": null
         }
@@ -289,7 +276,7 @@ var testStateModuleOrderChange = []byte(
 
 var testStateSimple = []byte(
 	`{
-    "version": 3,
+    "version": 1,
     "serial": 1,
     "modules": [
         {
@@ -297,11 +284,7 @@ var testStateSimple = []byte(
                 "root"
             ],
             "outputs": {
-                "foo": {
-                    "sensitive": false,
-                    "type": "string",
-                    "value": "bar"
-                }
+                "foo": "bar"
             },
             "resources": null
         }

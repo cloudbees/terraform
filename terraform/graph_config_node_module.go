@@ -69,7 +69,7 @@ func (n *GraphNodeConfigModule) Expand(b GraphBuilder) (GraphNodeSubgraph, error
 	return &graphNodeModuleExpanded{
 		Original:  n,
 		Graph:     graph,
-		Variables: make(map[string]interface{}),
+		Variables: make(map[string]string),
 	}, nil
 }
 
@@ -107,7 +107,7 @@ type graphNodeModuleExpanded struct {
 	// Variables is a map of the input variables. This reference should
 	// be shared with ModuleInputTransformer in order to create a connection
 	// where the variables are set properly.
-	Variables map[string]interface{}
+	Variables map[string]string
 }
 
 func (n *graphNodeModuleExpanded) Name() string {
@@ -147,8 +147,8 @@ func (n *graphNodeModuleExpanded) EvalTree() EvalNode {
 			},
 
 			&EvalVariableBlock{
-				Config:         &resourceConfig,
-				VariableValues: n.Variables,
+				Config:    &resourceConfig,
+				Variables: n.Variables,
 			},
 		},
 	}

@@ -4,7 +4,6 @@
 package rds
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awsutil"
@@ -2795,22 +2794,6 @@ func (s AddSourceIdentifierToSubscriptionInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *AddSourceIdentifierToSubscriptionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "AddSourceIdentifierToSubscriptionInput"}
-	if s.SourceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceIdentifier"))
-	}
-	if s.SubscriptionName == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type AddSourceIdentifierToSubscriptionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2849,22 +2832,6 @@ func (s AddTagsToResourceInput) String() string {
 // GoString returns the string representation
 func (s AddTagsToResourceInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *AddTagsToResourceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "AddTagsToResourceInput"}
-	if s.ResourceName == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
-	}
-	if s.Tags == nil {
-		invalidParams.Add(request.NewErrParamRequired("Tags"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type AddTagsToResourceOutput struct {
@@ -2913,25 +2880,6 @@ func (s ApplyPendingMaintenanceActionInput) String() string {
 // GoString returns the string representation
 func (s ApplyPendingMaintenanceActionInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ApplyPendingMaintenanceActionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ApplyPendingMaintenanceActionInput"}
-	if s.ApplyAction == nil {
-		invalidParams.Add(request.NewErrParamRequired("ApplyAction"))
-	}
-	if s.OptInType == nil {
-		invalidParams.Add(request.NewErrParamRequired("OptInType"))
-	}
-	if s.ResourceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type ApplyPendingMaintenanceActionOutput struct {
@@ -2986,19 +2934,6 @@ func (s AuthorizeDBSecurityGroupIngressInput) String() string {
 // GoString returns the string representation
 func (s AuthorizeDBSecurityGroupIngressInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *AuthorizeDBSecurityGroupIngressInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "AuthorizeDBSecurityGroupIngressInput"}
-	if s.DBSecurityGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSecurityGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type AuthorizeDBSecurityGroupIngressOutput struct {
@@ -3130,22 +3065,6 @@ func (s CopyDBClusterSnapshotInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CopyDBClusterSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CopyDBClusterSnapshotInput"}
-	if s.SourceDBClusterSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceDBClusterSnapshotIdentifier"))
-	}
-	if s.TargetDBClusterSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetDBClusterSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CopyDBClusterSnapshotOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3206,25 +3125,6 @@ func (s CopyDBParameterGroupInput) String() string {
 // GoString returns the string representation
 func (s CopyDBParameterGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CopyDBParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CopyDBParameterGroupInput"}
-	if s.SourceDBParameterGroupIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceDBParameterGroupIdentifier"))
-	}
-	if s.TargetDBParameterGroupDescription == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetDBParameterGroupDescription"))
-	}
-	if s.TargetDBParameterGroupIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetDBParameterGroupIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type CopyDBParameterGroupOutput struct {
@@ -3312,22 +3212,6 @@ func (s CopyDBSnapshotInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CopyDBSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CopyDBSnapshotInput"}
-	if s.SourceDBSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceDBSnapshotIdentifier"))
-	}
-	if s.TargetDBSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetDBSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CopyDBSnapshotOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3386,25 +3270,6 @@ func (s CopyOptionGroupInput) String() string {
 // GoString returns the string representation
 func (s CopyOptionGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CopyOptionGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CopyOptionGroupInput"}
-	if s.SourceOptionGroupIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceOptionGroupIdentifier"))
-	}
-	if s.TargetOptionGroupDescription == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetOptionGroupDescription"))
-	}
-	if s.TargetOptionGroupIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetOptionGroupIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type CopyOptionGroupOutput struct {
@@ -3578,28 +3443,6 @@ func (s CreateDBClusterInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBClusterInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBClusterInput"}
-	if s.DBClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterIdentifier"))
-	}
-	if s.Engine == nil {
-		invalidParams.Add(request.NewErrParamRequired("Engine"))
-	}
-	if s.MasterUserPassword == nil {
-		invalidParams.Add(request.NewErrParamRequired("MasterUserPassword"))
-	}
-	if s.MasterUsername == nil {
-		invalidParams.Add(request.NewErrParamRequired("MasterUsername"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CreateDBClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3654,25 +3497,6 @@ func (s CreateDBClusterParameterGroupInput) String() string {
 // GoString returns the string representation
 func (s CreateDBClusterParameterGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBClusterParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBClusterParameterGroupInput"}
-	if s.DBClusterParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterParameterGroupName"))
-	}
-	if s.DBParameterGroupFamily == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupFamily"))
-	}
-	if s.Description == nil {
-		invalidParams.Add(request.NewErrParamRequired("Description"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type CreateDBClusterParameterGroupOutput struct {
@@ -3732,22 +3556,6 @@ func (s CreateDBClusterSnapshotInput) String() string {
 // GoString returns the string representation
 func (s CreateDBClusterSnapshotInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBClusterSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBClusterSnapshotInput"}
-	if s.DBClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterIdentifier"))
-	}
-	if s.DBClusterSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type CreateDBClusterSnapshotOutput struct {
@@ -4291,25 +4099,6 @@ func (s CreateDBInstanceInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBInstanceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBInstanceInput"}
-	if s.DBInstanceClass == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceClass"))
-	}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-	if s.Engine == nil {
-		invalidParams.Add(request.NewErrParamRequired("Engine"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CreateDBInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4475,22 +4264,6 @@ func (s CreateDBInstanceReadReplicaInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBInstanceReadReplicaInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBInstanceReadReplicaInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-	if s.SourceDBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceDBInstanceIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CreateDBInstanceReadReplicaOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4546,25 +4319,6 @@ func (s CreateDBParameterGroupInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBParameterGroupInput"}
-	if s.DBParameterGroupFamily == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupFamily"))
-	}
-	if s.DBParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupName"))
-	}
-	if s.Description == nil {
-		invalidParams.Add(request.NewErrParamRequired("Description"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CreateDBParameterGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4613,22 +4367,6 @@ func (s CreateDBSecurityGroupInput) String() string {
 // GoString returns the string representation
 func (s CreateDBSecurityGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBSecurityGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBSecurityGroupInput"}
-	if s.DBSecurityGroupDescription == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSecurityGroupDescription"))
-	}
-	if s.DBSecurityGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSecurityGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type CreateDBSecurityGroupOutput struct {
@@ -4686,22 +4424,6 @@ func (s CreateDBSnapshotInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBSnapshotInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-	if s.DBSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CreateDBSnapshotOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4751,25 +4473,6 @@ func (s CreateDBSubnetGroupInput) String() string {
 // GoString returns the string representation
 func (s CreateDBSubnetGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateDBSubnetGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateDBSubnetGroupInput"}
-	if s.DBSubnetGroupDescription == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSubnetGroupDescription"))
-	}
-	if s.DBSubnetGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSubnetGroupName"))
-	}
-	if s.SubnetIds == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubnetIds"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type CreateDBSubnetGroupOutput struct {
@@ -4854,22 +4557,6 @@ func (s CreateEventSubscriptionInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateEventSubscriptionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateEventSubscriptionInput"}
-	if s.SnsTopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("SnsTopicArn"))
-	}
-	if s.SubscriptionName == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CreateEventSubscriptionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4923,28 +4610,6 @@ func (s CreateOptionGroupInput) String() string {
 // GoString returns the string representation
 func (s CreateOptionGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateOptionGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateOptionGroupInput"}
-	if s.EngineName == nil {
-		invalidParams.Add(request.NewErrParamRequired("EngineName"))
-	}
-	if s.MajorEngineVersion == nil {
-		invalidParams.Add(request.NewErrParamRequired("MajorEngineVersion"))
-	}
-	if s.OptionGroupDescription == nil {
-		invalidParams.Add(request.NewErrParamRequired("OptionGroupDescription"))
-	}
-	if s.OptionGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("OptionGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type CreateOptionGroupOutput struct {
@@ -5895,19 +5560,6 @@ func (s DeleteDBClusterInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBClusterInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBClusterInput"}
-	if s.DBClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeleteDBClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5952,19 +5604,6 @@ func (s DeleteDBClusterParameterGroupInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBClusterParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBClusterParameterGroupInput"}
-	if s.DBClusterParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterParameterGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeleteDBClusterParameterGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5997,19 +5636,6 @@ func (s DeleteDBClusterSnapshotInput) String() string {
 // GoString returns the string representation
 func (s DeleteDBClusterSnapshotInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBClusterSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBClusterSnapshotInput"}
-	if s.DBClusterSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeleteDBClusterSnapshotOutput struct {
@@ -6080,19 +5706,6 @@ func (s DeleteDBInstanceInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBInstanceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBInstanceInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeleteDBInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6135,19 +5748,6 @@ func (s DeleteDBParameterGroupInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBParameterGroupInput"}
-	if s.DBParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeleteDBParameterGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6185,19 +5785,6 @@ func (s DeleteDBSecurityGroupInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBSecurityGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBSecurityGroupInput"}
-	if s.DBSecurityGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSecurityGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeleteDBSecurityGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6230,19 +5817,6 @@ func (s DeleteDBSnapshotInput) String() string {
 // GoString returns the string representation
 func (s DeleteDBSnapshotInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBSnapshotInput"}
-	if s.DBSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeleteDBSnapshotOutput struct {
@@ -6289,19 +5863,6 @@ func (s DeleteDBSubnetGroupInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteDBSubnetGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteDBSubnetGroupInput"}
-	if s.DBSubnetGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSubnetGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeleteDBSubnetGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6331,19 +5892,6 @@ func (s DeleteEventSubscriptionInput) String() string {
 // GoString returns the string representation
 func (s DeleteEventSubscriptionInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteEventSubscriptionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteEventSubscriptionInput"}
-	if s.SubscriptionName == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeleteEventSubscriptionOutput struct {
@@ -6381,19 +5929,6 @@ func (s DeleteOptionGroupInput) String() string {
 // GoString returns the string representation
 func (s DeleteOptionGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteOptionGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteOptionGroupInput"}
-	if s.OptionGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("OptionGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeleteOptionGroupOutput struct {
@@ -6484,26 +6019,6 @@ func (s DescribeCertificatesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeCertificatesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeCertificatesInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Data returned by the DescribeCertificates action.
 type DescribeCertificatesOutput struct {
 	_ struct{} `type:"structure"`
@@ -6564,26 +6079,6 @@ func (s DescribeDBClusterParameterGroupsInput) String() string {
 // GoString returns the string representation
 func (s DescribeDBClusterParameterGroupsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBClusterParameterGroupsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBClusterParameterGroupsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DescribeDBClusterParameterGroupsOutput struct {
@@ -6650,29 +6145,6 @@ func (s DescribeDBClusterParametersInput) String() string {
 // GoString returns the string representation
 func (s DescribeDBClusterParametersInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBClusterParametersInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBClusterParametersInput"}
-	if s.DBClusterParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterParameterGroupName"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Provides details about a DB cluster parameter group including the parameters
@@ -6757,26 +6229,6 @@ func (s DescribeDBClusterSnapshotsInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBClusterSnapshotsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBClusterSnapshotsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Provides a list of DB cluster snapshots for the user as the result of a call
 // to the DescribeDBClusterSnapshots action.
 type DescribeDBClusterSnapshotsOutput struct {
@@ -6840,26 +6292,6 @@ func (s DescribeDBClustersInput) String() string {
 // GoString returns the string representation
 func (s DescribeDBClustersInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBClustersInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBClustersInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Contains the result of a successful invocation of the DescribeDBClusters
@@ -6940,26 +6372,6 @@ func (s DescribeDBEngineVersionsInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBEngineVersionsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBEngineVersionsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Contains the result of a successful invocation of the DescribeDBEngineVersions
 // action.
 type DescribeDBEngineVersionsOutput struct {
@@ -7022,26 +6434,6 @@ func (s DescribeDBInstancesInput) String() string {
 // GoString returns the string representation
 func (s DescribeDBInstancesInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBInstancesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBInstancesInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Contains the result of a successful invocation of the DescribeDBInstances
@@ -7139,29 +6531,6 @@ func (s DescribeDBLogFilesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBLogFilesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBLogFilesInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // The response from a call to DescribeDBLogFiles.
 type DescribeDBLogFilesOutput struct {
 	_ struct{} `type:"structure"`
@@ -7220,26 +6589,6 @@ func (s DescribeDBParameterGroupsInput) String() string {
 // GoString returns the string representation
 func (s DescribeDBParameterGroupsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBParameterGroupsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBParameterGroupsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Contains the result of a successful invocation of the DescribeDBParameterGroups
@@ -7312,29 +6661,6 @@ func (s DescribeDBParametersInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBParametersInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBParametersInput"}
-	if s.DBParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupName"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Contains the result of a successful invocation of the DescribeDBParameters
 // action.
 type DescribeDBParametersOutput struct {
@@ -7391,26 +6717,6 @@ func (s DescribeDBSecurityGroupsInput) String() string {
 // GoString returns the string representation
 func (s DescribeDBSecurityGroupsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBSecurityGroupsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBSecurityGroupsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Contains the result of a successful invocation of the DescribeDBSecurityGroups
@@ -7563,26 +6869,6 @@ func (s DescribeDBSnapshotsInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBSnapshotsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBSnapshotsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Contains the result of a successful invocation of the DescribeDBSnapshots
 // action.
 type DescribeDBSnapshotsOutput struct {
@@ -7639,26 +6925,6 @@ func (s DescribeDBSubnetGroupsInput) String() string {
 // GoString returns the string representation
 func (s DescribeDBSubnetGroupsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeDBSubnetGroupsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeDBSubnetGroupsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Contains the result of a successful invocation of the DescribeDBSubnetGroups
@@ -7720,29 +6986,6 @@ func (s DescribeEngineDefaultClusterParametersInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeEngineDefaultClusterParametersInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeEngineDefaultClusterParametersInput"}
-	if s.DBParameterGroupFamily == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupFamily"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DescribeEngineDefaultClusterParametersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7795,29 +7038,6 @@ func (s DescribeEngineDefaultParametersInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeEngineDefaultParametersInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeEngineDefaultParametersInput"}
-	if s.DBParameterGroupFamily == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupFamily"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DescribeEngineDefaultParametersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7856,26 +7076,6 @@ func (s DescribeEventCategoriesInput) String() string {
 // GoString returns the string representation
 func (s DescribeEventCategoriesInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeEventCategoriesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeEventCategoriesInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Data returned from the DescribeEventCategories action.
@@ -7928,26 +7128,6 @@ func (s DescribeEventSubscriptionsInput) String() string {
 // GoString returns the string representation
 func (s DescribeEventSubscriptionsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeEventSubscriptionsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeEventSubscriptionsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Data returned by the DescribeEventSubscriptions action.
@@ -8044,26 +7224,6 @@ func (s DescribeEventsInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeEventsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeEventsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Contains the result of a successful invocation of the DescribeEvents action.
 type DescribeEventsOutput struct {
 	_ struct{} `type:"structure"`
@@ -8124,29 +7284,6 @@ func (s DescribeOptionGroupOptionsInput) String() string {
 // GoString returns the string representation
 func (s DescribeOptionGroupOptionsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeOptionGroupOptionsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeOptionGroupOptionsInput"}
-	if s.EngineName == nil {
-		invalidParams.Add(request.NewErrParamRequired("EngineName"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DescribeOptionGroupOptionsOutput struct {
@@ -8213,26 +7350,6 @@ func (s DescribeOptionGroupsInput) String() string {
 // GoString returns the string representation
 func (s DescribeOptionGroupsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeOptionGroupsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeOptionGroupsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // List of option groups.
@@ -8308,29 +7425,6 @@ func (s DescribeOrderableDBInstanceOptionsInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeOrderableDBInstanceOptionsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeOrderableDBInstanceOptionsInput"}
-	if s.Engine == nil {
-		invalidParams.Add(request.NewErrParamRequired("Engine"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Contains the result of a successful invocation of the DescribeOrderableDBInstanceOptions
 // action.
 type DescribeOrderableDBInstanceOptionsOutput struct {
@@ -8395,26 +7489,6 @@ func (s DescribePendingMaintenanceActionsInput) String() string {
 // GoString returns the string representation
 func (s DescribePendingMaintenanceActionsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribePendingMaintenanceActionsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribePendingMaintenanceActionsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Data returned from the DescribePendingMaintenanceActions action.
@@ -8503,26 +7577,6 @@ func (s DescribeReservedDBInstancesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeReservedDBInstancesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeReservedDBInstancesInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DescribeReservedDBInstancesOfferingsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8582,26 +7636,6 @@ func (s DescribeReservedDBInstancesOfferingsInput) String() string {
 // GoString returns the string representation
 func (s DescribeReservedDBInstancesOfferingsInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeReservedDBInstancesOfferingsInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeReservedDBInstancesOfferingsInput"}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Contains the result of a successful invocation of the DescribeReservedDBInstancesOfferings
@@ -8732,22 +7766,6 @@ func (s DownloadDBLogFilePortionInput) String() string {
 // GoString returns the string representation
 func (s DownloadDBLogFilePortionInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DownloadDBLogFilePortionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DownloadDBLogFilePortionInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-	if s.LogFileName == nil {
-		invalidParams.Add(request.NewErrParamRequired("LogFileName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // This data type is used as a response element to DownloadDBLogFilePortion.
@@ -9028,22 +8046,6 @@ func (s Filter) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *Filter) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "Filter"}
-	if s.Name == nil {
-		invalidParams.Add(request.NewErrParamRequired("Name"))
-	}
-	if s.Values == nil {
-		invalidParams.Add(request.NewErrParamRequired("Values"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // This data type is used as a response element in the DescribeDBSecurityGroups
 // action.
 type IPRange struct {
@@ -9087,29 +8089,6 @@ func (s ListTagsForResourceInput) String() string {
 // GoString returns the string representation
 func (s ListTagsForResourceInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ListTagsForResourceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ListTagsForResourceInput"}
-	if s.ResourceName == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
-	}
-	if s.Filters != nil {
-		for i, v := range s.Filters {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Filters", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type ListTagsForResourceOutput struct {
@@ -9250,19 +8229,6 @@ func (s ModifyDBClusterInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyDBClusterInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyDBClusterInput"}
-	if s.DBClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type ModifyDBClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9302,22 +8268,6 @@ func (s ModifyDBClusterParameterGroupInput) String() string {
 // GoString returns the string representation
 func (s ModifyDBClusterParameterGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyDBClusterParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyDBClusterParameterGroupInput"}
-	if s.DBClusterParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterParameterGroupName"))
-	}
-	if s.Parameters == nil {
-		invalidParams.Add(request.NewErrParamRequired("Parameters"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type ModifyDBInstanceInput struct {
@@ -9772,19 +8722,6 @@ func (s ModifyDBInstanceInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyDBInstanceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyDBInstanceInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type ModifyDBInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9840,22 +8777,6 @@ func (s ModifyDBParameterGroupInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyDBParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyDBParameterGroupInput"}
-	if s.DBParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupName"))
-	}
-	if s.Parameters == nil {
-		invalidParams.Add(request.NewErrParamRequired("Parameters"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type ModifyDBSnapshotAttributeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9896,19 +8817,6 @@ func (s ModifyDBSnapshotAttributeInput) String() string {
 // GoString returns the string representation
 func (s ModifyDBSnapshotAttributeInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyDBSnapshotAttributeInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyDBSnapshotAttributeInput"}
-	if s.DBSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type ModifyDBSnapshotAttributeOutput struct {
@@ -9959,22 +8867,6 @@ func (s ModifyDBSubnetGroupInput) String() string {
 // GoString returns the string representation
 func (s ModifyDBSubnetGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyDBSubnetGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyDBSubnetGroupInput"}
-	if s.DBSubnetGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSubnetGroupName"))
-	}
-	if s.SubnetIds == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubnetIds"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type ModifyDBSubnetGroupOutput struct {
@@ -10038,19 +8930,6 @@ func (s ModifyEventSubscriptionInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyEventSubscriptionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyEventSubscriptionInput"}
-	if s.SubscriptionName == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type ModifyEventSubscriptionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10099,29 +8978,6 @@ func (s ModifyOptionGroupInput) String() string {
 // GoString returns the string representation
 func (s ModifyOptionGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ModifyOptionGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ModifyOptionGroupInput"}
-	if s.OptionGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("OptionGroupName"))
-	}
-	if s.OptionsToInclude != nil {
-		for i, v := range s.OptionsToInclude {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OptionsToInclude", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type ModifyOptionGroupOutput struct {
@@ -10209,19 +9065,6 @@ func (s OptionConfiguration) String() string {
 // GoString returns the string representation
 func (s OptionConfiguration) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *OptionConfiguration) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "OptionConfiguration"}
-	if s.OptionName == nil {
-		invalidParams.Add(request.NewErrParamRequired("OptionName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type OptionGroup struct {
@@ -10676,19 +9519,6 @@ func (s PromoteReadReplicaInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *PromoteReadReplicaInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "PromoteReadReplicaInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type PromoteReadReplicaOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10741,19 +9571,6 @@ func (s PurchaseReservedDBInstancesOfferingInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *PurchaseReservedDBInstancesOfferingInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "PurchaseReservedDBInstancesOfferingInput"}
-	if s.ReservedDBInstancesOfferingId == nil {
-		invalidParams.Add(request.NewErrParamRequired("ReservedDBInstancesOfferingId"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type PurchaseReservedDBInstancesOfferingOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10798,19 +9615,6 @@ func (s RebootDBInstanceInput) String() string {
 // GoString returns the string representation
 func (s RebootDBInstanceInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RebootDBInstanceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RebootDBInstanceInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RebootDBInstanceOutput struct {
@@ -10877,22 +9681,6 @@ func (s RemoveSourceIdentifierFromSubscriptionInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RemoveSourceIdentifierFromSubscriptionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RemoveSourceIdentifierFromSubscriptionInput"}
-	if s.SourceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceIdentifier"))
-	}
-	if s.SubscriptionName == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type RemoveSourceIdentifierFromSubscriptionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10931,22 +9719,6 @@ func (s RemoveTagsFromResourceInput) String() string {
 // GoString returns the string representation
 func (s RemoveTagsFromResourceInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RemoveTagsFromResourceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RemoveTagsFromResourceInput"}
-	if s.ResourceName == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceName"))
-	}
-	if s.TagKeys == nil {
-		invalidParams.Add(request.NewErrParamRequired("TagKeys"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RemoveTagsFromResourceOutput struct {
@@ -11094,19 +9866,6 @@ func (s ResetDBClusterParameterGroupInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ResetDBClusterParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ResetDBClusterParameterGroupInput"}
-	if s.DBClusterParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterParameterGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type ResetDBParameterGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11159,19 +9918,6 @@ func (s ResetDBParameterGroupInput) String() string {
 // GoString returns the string representation
 func (s ResetDBParameterGroupInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ResetDBParameterGroupInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ResetDBParameterGroupInput"}
-	if s.DBParameterGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBParameterGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Describes the pending maintenance actions for a resource.
@@ -11286,25 +10032,6 @@ func (s RestoreDBClusterFromSnapshotInput) String() string {
 // GoString returns the string representation
 func (s RestoreDBClusterFromSnapshotInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RestoreDBClusterFromSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RestoreDBClusterFromSnapshotInput"}
-	if s.DBClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterIdentifier"))
-	}
-	if s.Engine == nil {
-		invalidParams.Add(request.NewErrParamRequired("Engine"))
-	}
-	if s.SnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RestoreDBClusterFromSnapshotOutput struct {
@@ -11422,22 +10149,6 @@ func (s RestoreDBClusterToPointInTimeInput) String() string {
 // GoString returns the string representation
 func (s RestoreDBClusterToPointInTimeInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RestoreDBClusterToPointInTimeInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RestoreDBClusterToPointInTimeInput"}
-	if s.DBClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBClusterIdentifier"))
-	}
-	if s.SourceDBClusterIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceDBClusterIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RestoreDBClusterToPointInTimeOutput struct {
@@ -11625,22 +10336,6 @@ func (s RestoreDBInstanceFromDBSnapshotInput) String() string {
 // GoString returns the string representation
 func (s RestoreDBInstanceFromDBSnapshotInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RestoreDBInstanceFromDBSnapshotInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RestoreDBInstanceFromDBSnapshotInput"}
-	if s.DBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBInstanceIdentifier"))
-	}
-	if s.DBSnapshotIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSnapshotIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RestoreDBInstanceFromDBSnapshotOutput struct {
@@ -11842,22 +10537,6 @@ func (s RestoreDBInstanceToPointInTimeInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RestoreDBInstanceToPointInTimeInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RestoreDBInstanceToPointInTimeInput"}
-	if s.SourceDBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("SourceDBInstanceIdentifier"))
-	}
-	if s.TargetDBInstanceIdentifier == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetDBInstanceIdentifier"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type RestoreDBInstanceToPointInTimeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11915,19 +10594,6 @@ func (s RevokeDBSecurityGroupIngressInput) String() string {
 // GoString returns the string representation
 func (s RevokeDBSecurityGroupIngressInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RevokeDBSecurityGroupIngressInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RevokeDBSecurityGroupIngressInput"}
-	if s.DBSecurityGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("DBSecurityGroupName"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RevokeDBSecurityGroupIngressOutput struct {

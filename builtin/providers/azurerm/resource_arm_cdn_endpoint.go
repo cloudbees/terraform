@@ -6,9 +6,11 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/arm/cdn"
 	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -20,71 +22,71 @@ func resourceArmCdnEndpoint() *schema.Resource {
 		Delete: resourceArmCdnEndpointDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"location": {
+			"location": &schema.Schema{
 				Type:      schema.TypeString,
 				Required:  true,
 				ForceNew:  true,
 				StateFunc: azureRMNormalizeLocation,
 			},
 
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"profile_name": {
+			"profile_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"origin_host_header": {
+			"origin_host_header": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"is_http_allowed": {
+			"is_http_allowed": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
 			},
 
-			"is_https_allowed": {
+			"is_https_allowed": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
 			},
 
-			"origin": {
+			"origin": &schema.Schema{
 				Type:     schema.TypeSet,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": {
+						"name": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"host_name": {
+						"host_name": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"http_port": {
+						"http_port": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
 						},
 
-						"https_port": {
+						"https_port": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
 							Computed: true,
@@ -94,36 +96,34 @@ func resourceArmCdnEndpoint() *schema.Resource {
 				Set: resourceArmCdnEndpointOriginHash,
 			},
 
-			"origin_path": {
+			"origin_path": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"querystring_caching_behaviour": {
+			"querystring_caching_behaviour": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "IgnoreQueryString",
 				ValidateFunc: validateCdnEndpointQuerystringCachingBehaviour,
 			},
 
-			"content_types_to_compress": {
+			"content_types_to_compress": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Set: schema.HashString,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
 			},
 
-			"is_compression_enabled": {
+			"is_compression_enabled": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
 
-			"host_name": {
+			"host_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -191,20 +191,23 @@ func resourceArmCdnEndpointCreate(d *schema.ResourceData, meta interface{}) erro
 		Tags:       expandTags(tags),
 	}
 
-	_, err := cdnEndpointsClient.Create(name, cdnEndpoint, profileName, resGroup, make(chan struct{}))
+	resp, err := cdnEndpointsClient.Create(name, cdnEndpoint, profileName, resGroup)
 	if err != nil {
 		return err
 	}
 
-	read, err := cdnEndpointsClient.Get(name, profileName, resGroup)
-	if err != nil {
-		return err
-	}
-	if read.ID == nil {
-		return fmt.Errorf("Cannot read CND Endpoint %s/%s (resource group %s) ID", profileName, name, resGroup)
-	}
+	d.SetId(*resp.ID)
 
-	d.SetId(*read.ID)
+	log.Printf("[DEBUG] Waiting for CDN Endpoint (%s) to become available", name)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"Accepted", "Updating", "Creating"},
+		Target:  []string{"Succeeded"},
+		Refresh: cdnEndpointStateRefreshFunc(client, resGroup, profileName, name),
+		Timeout: 10 * time.Minute,
+	}
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting for CDN Endpoint (%s) to become available: %s", name, err)
+	}
 
 	return resourceArmCdnEndpointRead(d, meta)
 }
@@ -335,15 +338,29 @@ func resourceArmCdnEndpointDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 	name := id.Path["endpoints"]
 
-	accResp, err := client.DeleteIfExists(name, profileName, resGroup, make(chan struct{}))
+	accResp, err := client.DeleteIfExists(name, profileName, resGroup)
 	if err != nil {
 		if accResp.StatusCode == http.StatusNotFound {
 			return nil
 		}
 		return fmt.Errorf("Error issuing AzureRM delete request for CDN Endpoint %q: %s", name, err)
 	}
+	_, err = pollIndefinitelyAsNeeded(client.Client, accResp.Response, http.StatusNotFound)
+	if err != nil {
+		return fmt.Errorf("Error polling for AzureRM delete request for CDN Endpoint %q: %s", name, err)
+	}
 
 	return err
+}
+
+func cdnEndpointStateRefreshFunc(client *ArmClient, resourceGroupName string, profileName string, name string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		res, err := client.cdnEndpointsClient.Get(name, profileName, resourceGroupName)
+		if err != nil {
+			return nil, "", fmt.Errorf("Error issuing read request in cdnEndpointStateRefreshFunc to Azure ARM for CDN Endpoint '%s' (RG: '%s'): %s", name, resourceGroupName, err)
+		}
+		return res, string(res.Properties.ProvisioningState), nil
+	}
 }
 
 func validateCdnEndpointQuerystringCachingBehaviour(v interface{}, k string) (ws []string, errors []error) {
@@ -383,13 +400,13 @@ func expandAzureRmCdnEndpointOrigins(d *schema.ResourceData) ([]cdn.DeepCreatedO
 		}
 
 		if v, ok := data["https_port"]; ok {
-			https_port := int32(v.(int))
+			https_port := v.(int)
 			properties.HTTPSPort = &https_port
 
 		}
 
 		if v, ok := data["http_port"]; ok {
-			http_port := int32(v.(int))
+			http_port := v.(int)
 			properties.HTTPPort = &http_port
 		}
 

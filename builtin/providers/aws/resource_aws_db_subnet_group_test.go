@@ -29,10 +29,6 @@ func TestAccAWSDBSubnetGroup_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDBSubnetGroupExists(
 						"aws_db_subnet_group.foo", &v),
-					resource.TestCheckResourceAttr(
-						"aws_db_subnet_group.foo", "name", "foo"),
-					resource.TestCheckResourceAttr(
-						"aws_db_subnet_group.foo", "description", "Managed by Terraform"),
 					testCheck,
 				),
 			},
@@ -84,7 +80,7 @@ func TestAccAWSDBSubnetGroup_updateDescription(t *testing.T) {
 					testAccCheckDBSubnetGroupExists(
 						"aws_db_subnet_group.foo", &v),
 					resource.TestCheckResourceAttr(
-						"aws_db_subnet_group.foo", "description", "Managed by Terraform"),
+						"aws_db_subnet_group.foo", "description", "foo description"),
 				),
 			},
 
@@ -217,6 +213,7 @@ resource "aws_subnet" "bar" {
 
 resource "aws_db_subnet_group" "foo" {
 	name = "foo"
+	description = "foo description"
 	subnet_ids = ["${aws_subnet.foo.id}", "${aws_subnet.bar.id}"]
 	tags {
 		Name = "tf-dbsubnet-group-test"

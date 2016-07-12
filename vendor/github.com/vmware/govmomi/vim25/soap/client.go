@@ -21,7 +21,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -46,9 +45,6 @@ type RoundTripper interface {
 	RoundTrip(ctx context.Context, req, res HasFault) error
 }
 
-var DefaultVimNamespace = "urn:vim25"
-var DefaultVimVersion = "6.0"
-
 type Client struct {
 	http.Client
 
@@ -57,9 +53,6 @@ type Client struct {
 	d *debugContainer
 	t *http.Transport
 	p *url.URL
-
-	Namespace string // Vim namespace
-	Version   string // Vim version
 }
 
 var schemeMatch = regexp.MustCompile(`^\w+://`)
@@ -120,9 +113,6 @@ func NewClient(u *url.URL, insecure bool) *Client {
 	// Remove user information from a copy of the URL
 	c.u = c.URL()
 	c.u.User = nil
-
-	c.Namespace = DefaultVimNamespace
-	c.Version = DefaultVimVersion
 
 	return &c
 }
@@ -265,8 +255,7 @@ func (c *Client) RoundTrip(ctx context.Context, reqBody, resBody HasFault) error
 	}
 
 	req.Header.Set(`Content-Type`, `text/xml; charset="utf-8"`)
-	soapAction := fmt.Sprintf("%s/%s", c.Namespace, c.Version)
-	req.Header.Set(`SOAPAction`, soapAction)
+	req.Header.Set(`SOAPAction`, `urn:vim25/6.0`)
 
 	if d.enabled() {
 		d.debugRequest(req)
@@ -428,12 +417,23 @@ var DefaultDownload = Download{
 	Method: "GET",
 }
 
-// Download GETs the remote file from the given URL
-func (c *Client) Download(u *url.URL, param *Download) (io.ReadCloser, int64, error) {
+// DownloadFile GETs the given URL to a local file
+func (c *Client) DownloadFile(file string, u *url.URL, param *Download) error {
+	var err error
+
+	if param == nil {
+		param = &DefaultDownload
+	}
+
+	fh, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	defer fh.Close()
 
 	req, err := http.NewRequest(param.Method, u.String(), nil)
 	if err != nil {
-		return nil, 0, err
+		return err
 	}
 
 	if param.Ticket != nil {
@@ -442,8 +442,10 @@ func (c *Client) Download(u *url.URL, param *Download) (io.ReadCloser, int64, er
 
 	res, err := c.Client.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return err
 	}
+
+	defer res.Body.Close()
 
 	switch res.StatusCode {
 	case http.StatusOK:
@@ -452,37 +454,12 @@ func (c *Client) Download(u *url.URL, param *Download) (io.ReadCloser, int64, er
 	}
 
 	if err != nil {
-		return nil, 0, err
-	}
-
-	var r io.ReadCloser = res.Body
-
-	return r, res.ContentLength, nil
-}
-
-// DownloadFile GETs the given URL to a local file
-func (c *Client) DownloadFile(file string, u *url.URL, param *Download) error {
-	var err error
-	if param == nil {
-		param = &DefaultDownload
-	}
-
-	rc, contentLength, err := c.Download(u, param)
-	if err != nil {
 		return err
 	}
-	defer rc.Close()
 
-	var r io.Reader = rc
-
-	fh, err := os.Create(file)
-	if err != nil {
-		return err
-	}
-	defer fh.Close()
-
+	var r io.Reader = res.Body
 	if param.Progress != nil {
-		pr := progress.NewReader(param.Progress, r, contentLength)
+		pr := progress.NewReader(param.Progress, res.Body, res.ContentLength)
 		r = pr
 
 		// Mark progress reader as done when returning from this function.

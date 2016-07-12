@@ -41,9 +41,8 @@ func resourceAwsDbParameterGroup() *schema.Resource {
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
-				Default:  "Managed by Terraform",
 			},
 			"parameter": &schema.Schema{
 				Type:     schema.TypeSet,

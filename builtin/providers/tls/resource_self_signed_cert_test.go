@@ -60,12 +60,7 @@ EOT
                     }
                 `, testPrivateKey),
 				Check: func(s *terraform.State) error {
-					gotUntyped := s.RootModule().Outputs["key_pem"].Value
-					got, ok := gotUntyped.(string)
-					if !ok {
-						return fmt.Errorf("output for \"public_key_openssh\" is not a string")
-					}
-
+					got := s.RootModule().Outputs["key_pem"]
 					if !strings.HasPrefix(got, "-----BEGIN CERTIFICATE----") {
 						return fmt.Errorf("key is missing cert PEM preamble")
 					}

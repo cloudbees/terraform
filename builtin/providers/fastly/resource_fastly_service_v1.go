@@ -1,8 +1,6 @@
 package fastly
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -21,9 +19,6 @@ func resourceServiceV1() *schema.Resource {
 		Read:   resourceServiceV1Read,
 		Update: resourceServiceV1Update,
 		Delete: resourceServiceV1Delete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -55,39 +50,6 @@ func resourceServiceV1() *schema.Resource {
 						"comment": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
-						},
-					},
-				},
-			},
-
-			"condition": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"statement": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The statement used to determine if the condition is met",
-							StateFunc: func(v interface{}) string {
-								value := v.(string)
-								// Trim newlines and spaces, to match Fastly API
-								return strings.TrimSpace(value)
-							},
-						},
-						"priority": &schema.Schema{
-							Type:        schema.TypeInt,
-							Required:    true,
-							Description: "A number used to determine the order in which multiple conditions execute. Lower numbers execute first",
-						},
-						"type": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Type of the condition, either `REQUEST`, `RESPONSE`, or `CACHE`",
 						},
 					},
 				},
@@ -194,43 +156,6 @@ func resourceServiceV1() *schema.Resource {
 			"force_destroy": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-			},
-
-			"cache_setting": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						// required fields
-						"name": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "A name to refer to this Cache Setting",
-						},
-						"cache_condition": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Condition to check if this Cache Setting applies",
-						},
-						"action": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Action to take",
-						},
-						// optional
-						"stale_ttl": &schema.Schema{
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "Max 'Time To Live' for stale (unreachable) objects.",
-							Default:     300,
-						},
-						"ttl": &schema.Schema{
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Description: "The 'Time To Live' for the object",
-						},
-					},
-				},
 			},
 
 			"gzip": &schema.Schema{
@@ -371,188 +296,11 @@ func resourceServiceV1() *schema.Resource {
 					},
 				},
 			},
-
-			"s3logging": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						// Required fields
-						"name": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Unique name to refer to this logging setup",
-						},
-						"bucket_name": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "S3 Bucket name to store logs in",
-						},
-						"s3_access_key": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							DefaultFunc: schema.EnvDefaultFunc("FASTLY_S3_ACCESS_KEY", ""),
-							Description: "AWS Access Key",
-						},
-						"s3_secret_key": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							DefaultFunc: schema.EnvDefaultFunc("FASTLY_S3_SECRET_KEY", ""),
-							Description: "AWS Secret Key",
-						},
-						// Optional fields
-						"path": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Path to store the files. Must end with a trailing slash",
-						},
-						"domain": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Bucket endpoint",
-						},
-						"gzip_level": &schema.Schema{
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Default:     0,
-							Description: "Gzip Compression level",
-						},
-						"period": &schema.Schema{
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Default:     3600,
-							Description: "How frequently the logs should be transferred, in seconds (Default 3600)",
-						},
-						"format": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "%h %l %u %t %r %>s",
-							Description: "Apache-style string or VCL variables to use for log formatting",
-						},
-						"timestamp_format": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "%Y-%m-%dT%H:%M:%S.000",
-							Description: "specified timestamp formatting (default `%Y-%m-%dT%H:%M:%S.000`)",
-						},
-					},
-				},
-			},
-
-			"request_setting": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						// Required fields
-						"name": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Unique name to refer to this Request Setting",
-						},
-						"request_condition": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Name of a RequestCondition to apply.",
-						},
-						// Optional fields
-						"max_stale_age": &schema.Schema{
-							Type:        schema.TypeInt,
-							Optional:    true,
-							Default:     60,
-							Description: "How old an object is allowed to be, in seconds. Default `60`",
-						},
-						"force_miss": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "Force a cache miss for the request",
-						},
-						"force_ssl": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "Forces the request use SSL",
-						},
-						"action": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Allows you to terminate request handling and immediately perform an action",
-						},
-						"bypass_busy_wait": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "Disable collapsed forwarding",
-						},
-						"hash_keys": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Comma separated list of varnish request object fields that should be in the hash key",
-						},
-						"xff": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Default:     "append",
-							Description: "X-Forwarded-For options",
-						},
-						"timer_support": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "Injects the X-Timer info into the request",
-						},
-						"geo_headers": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "Inject Fastly-Geo-Country, Fastly-Geo-City, and Fastly-Geo-Region",
-						},
-						"default_host": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "the host header",
-						},
-					},
-				},
-			},
-			"vcl": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "A name to refer to this VCL configuration",
-						},
-						"content": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The contents of this VCL configuration",
-							StateFunc: func(v interface{}) string {
-								switch v.(type) {
-								case string:
-									hash := sha1.Sum([]byte(v.(string)))
-									return hex.EncodeToString(hash[:])
-								default:
-									return ""
-								}
-							},
-						},
-						"main": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-							Description: "Should this VCL configuation be the main configuration",
-						},
-					},
-				},
-			},
 		},
 	}
 }
 
 func resourceServiceV1Create(d *schema.ResourceData, meta interface{}) error {
-	if err := validateVCLs(d); err != nil {
-		return err
-	}
-
 	conn := meta.(*FastlyClient).conn
 	service, err := conn.CreateService(&gofastly.CreateServiceInput{
 		Name:    d.Get("name").(string),
@@ -568,10 +316,6 @@ func resourceServiceV1Create(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
-	if err := validateVCLs(d); err != nil {
-		return err
-	}
-
 	conn := meta.(*FastlyClient).conn
 
 	// Update Name. No new verions is required for this
@@ -597,11 +341,6 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 		"default_ttl",
 		"header",
 		"gzip",
-		"s3logging",
-		"condition",
-		"request_setting",
-		"cache_setting",
-		"vcl",
 	} {
 		if d.HasChange(v) {
 			needsChange = true
@@ -656,70 +395,13 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		// Conditions need to be updated first, as they can be referenced by other
-		// configuraiton objects (Backends, Request Headers, etc)
-
-		// Find difference in Conditions
-		if d.HasChange("condition") {
-			// Note: we don't utilize the PUT endpoint to update these objects, we simply
-			// destroy any that have changed, and create new ones with the updated
-			// values. This is how Terraform works with nested sub resources, we only
-			// get the full diff not a partial set item diff. Because this is done
-			// on a new version of the Fastly Service configuration, this is considered safe
-
-			oc, nc := d.GetChange("condition")
-			if oc == nil {
-				oc = new(schema.Set)
-			}
-			if nc == nil {
-				nc = new(schema.Set)
-			}
-
-			ocs := oc.(*schema.Set)
-			ncs := nc.(*schema.Set)
-			removeConditions := ocs.Difference(ncs).List()
-			addConditions := ncs.Difference(ocs).List()
-
-			// DELETE old Conditions
-			for _, cRaw := range removeConditions {
-				cf := cRaw.(map[string]interface{})
-				opts := gofastly.DeleteConditionInput{
-					Service: d.Id(),
-					Version: latestVersion,
-					Name:    cf["name"].(string),
-				}
-
-				log.Printf("[DEBUG] Fastly Conditions Removal opts: %#v", opts)
-				err := conn.DeleteCondition(&opts)
-				if err != nil {
-					return err
-				}
-			}
-
-			// POST new Conditions
-			for _, cRaw := range addConditions {
-				cf := cRaw.(map[string]interface{})
-				opts := gofastly.CreateConditionInput{
-					Service: d.Id(),
-					Version: latestVersion,
-					Name:    cf["name"].(string),
-					Type:    cf["type"].(string),
-					// need to trim leading/tailing spaces, incase the config has HEREDOC
-					// formatting and contains a trailing new line
-					Statement: strings.TrimSpace(cf["statement"].(string)),
-					Priority:  cf["priority"].(int),
-				}
-
-				log.Printf("[DEBUG] Create Conditions Opts: %#v", opts)
-				_, err := conn.CreateCondition(&opts)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
 		// Find differences in domains
 		if d.HasChange("domain") {
+			// Note: we don't utilize the PUT endpoint to update a Domain, we simply
+			// destroy it and create a new one. This is how Terraform works with nested
+			// sub resources, we only get the full diff not a partial set item diff.
+			// Because this is done on a new version of the configuration, this is
+			// considered safe
 			od, nd := d.GetChange("domain")
 			if od == nil {
 				od = new(schema.Set)
@@ -743,7 +425,7 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 					Name:    df["name"].(string),
 				}
 
-				log.Printf("[DEBUG] Fastly Domain removal opts: %#v", opts)
+				log.Printf("[DEBUG] Fastly Domain Removal opts: %#v", opts)
 				err := conn.DeleteDomain(&opts)
 				if err != nil {
 					return err
@@ -773,6 +455,12 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 
 		// find difference in backends
 		if d.HasChange("backend") {
+			// POST new Backends
+			// Note: we don't utilize the PUT endpoint to update a Backend, we simply
+			// destroy it and create a new one. This is how Terraform works with nested
+			// sub resources, we only get the full diff not a partial set item diff.
+			// Because this is done on a new version of the configuration, this is
+			// considered safe
 			ob, nb := d.GetChange("backend")
 			if ob == nil {
 				ob = new(schema.Set)
@@ -795,14 +483,13 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 					Name:    bf["name"].(string),
 				}
 
-				log.Printf("[DEBUG] Fastly Backend removal opts: %#v", opts)
+				log.Printf("[DEBUG] Fastly Backend Removal opts: %#v", opts)
 				err := conn.DeleteBackend(&opts)
 				if err != nil {
 					return err
 				}
 			}
 
-			// Find and post new Backends
 			for _, dRaw := range addBackends {
 				df := dRaw.(map[string]interface{})
 				opts := gofastly.CreateBackendInput{
@@ -830,6 +517,11 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if d.HasChange("header") {
+			// Note: we don't utilize the PUT endpoint to update a Header, we simply
+			// destroy it and create a new one. This is how Terraform works with nested
+			// sub resources, we only get the full diff not a partial set item diff.
+			// Because this is done on a new version of the configuration, this is
+			// considered safe
 			oh, nh := d.GetChange("header")
 			if oh == nil {
 				oh = new(schema.Set)
@@ -853,7 +545,7 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 					Name:    df["name"].(string),
 				}
 
-				log.Printf("[DEBUG] Fastly Header removal opts: %#v", opts)
+				log.Printf("[DEBUG] Fastly Header Removal opts: %#v", opts)
 				err := conn.DeleteHeader(&opts)
 				if err != nil {
 					return err
@@ -880,6 +572,11 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 
 		// Find differences in Gzips
 		if d.HasChange("gzip") {
+			// Note: we don't utilize the PUT endpoint to update a Gzip rule, we simply
+			// destroy it and create a new one. This is how Terraform works with nested
+			// sub resources, we only get the full diff not a partial set item diff.
+			// Because this is done on a new version of the configuration, this is
+			// considered safe
 			og, ng := d.GetChange("gzip")
 			if og == nil {
 				og = new(schema.Set)
@@ -903,7 +600,7 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 					Name:    df["name"].(string),
 				}
 
-				log.Printf("[DEBUG] Fastly Gzip removal opts: %#v", opts)
+				log.Printf("[DEBUG] Fastly Gzip Removal opts: %#v", opts)
 				err := conn.DeleteGzip(&opts)
 				if err != nil {
 					return err
@@ -919,6 +616,22 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 					Name:    df["name"].(string),
 				}
 
+				// Fastly API will fill in ContentTypes or Extensions with default
+				// values if they are omitted, which is not what we want. Ex: creating a
+				// gzip rule for content types of "text/html", and not supplying any
+				// extensions, will apply automatic values to extensions for css, js,
+				// html.  Given Go's nature of default values, and go-fastly's usage of
+				// omitempty for empty strings, we need to pre-fill the ContentTypes and
+				// Extensions with and empty space " " in order to not receive the
+				// default values for each field. This space is checked and then ignored
+				// in the flattenGzips function.
+				//
+				// I've opened a support case with Fastly to find if this is a bug or
+				// feature. If feature, we'll update the go-fastly library to not use
+				// omitempty in the definition. If bug, we'll have to weather it until
+				// they fix it
+				opts.Extensions = " "
+				opts.ContentTypes = " "
 				if v, ok := df["content_types"]; ok {
 					if len(v.(*schema.Set).List()) > 0 {
 						var cl []string
@@ -941,237 +654,6 @@ func resourceServiceV1Update(d *schema.ResourceData, meta interface{}) error {
 
 				log.Printf("[DEBUG] Fastly Gzip Addition opts: %#v", opts)
 				_, err := conn.CreateGzip(&opts)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		// find difference in s3logging
-		if d.HasChange("s3logging") {
-			os, ns := d.GetChange("s3logging")
-			if os == nil {
-				os = new(schema.Set)
-			}
-			if ns == nil {
-				ns = new(schema.Set)
-			}
-
-			oss := os.(*schema.Set)
-			nss := ns.(*schema.Set)
-			removeS3Logging := oss.Difference(nss).List()
-			addS3Logging := nss.Difference(oss).List()
-
-			// DELETE old S3 Log configurations
-			for _, sRaw := range removeS3Logging {
-				sf := sRaw.(map[string]interface{})
-				opts := gofastly.DeleteS3Input{
-					Service: d.Id(),
-					Version: latestVersion,
-					Name:    sf["name"].(string),
-				}
-
-				log.Printf("[DEBUG] Fastly S3 Logging removal opts: %#v", opts)
-				err := conn.DeleteS3(&opts)
-				if err != nil {
-					return err
-				}
-			}
-
-			// POST new/updated S3 Logging
-			for _, sRaw := range addS3Logging {
-				sf := sRaw.(map[string]interface{})
-
-				// Fastly API will not error if these are omitted, so we throw an error
-				// if any of these are empty
-				for _, sk := range []string{"s3_access_key", "s3_secret_key"} {
-					if sf[sk].(string) == "" {
-						return fmt.Errorf("[ERR] No %s found for S3 Log stream setup for Service (%s)", sk, d.Id())
-					}
-				}
-
-				opts := gofastly.CreateS3Input{
-					Service:         d.Id(),
-					Version:         latestVersion,
-					Name:            sf["name"].(string),
-					BucketName:      sf["bucket_name"].(string),
-					AccessKey:       sf["s3_access_key"].(string),
-					SecretKey:       sf["s3_secret_key"].(string),
-					Period:          uint(sf["period"].(int)),
-					GzipLevel:       uint(sf["gzip_level"].(int)),
-					Domain:          sf["domain"].(string),
-					Path:            sf["path"].(string),
-					Format:          sf["format"].(string),
-					TimestampFormat: sf["timestamp_format"].(string),
-				}
-
-				log.Printf("[DEBUG] Create S3 Logging Opts: %#v", opts)
-				_, err := conn.CreateS3(&opts)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		// find difference in request settings
-		if d.HasChange("request_setting") {
-			os, ns := d.GetChange("request_setting")
-			if os == nil {
-				os = new(schema.Set)
-			}
-			if ns == nil {
-				ns = new(schema.Set)
-			}
-
-			ors := os.(*schema.Set)
-			nrs := ns.(*schema.Set)
-			removeRequestSettings := ors.Difference(nrs).List()
-			addRequestSettings := nrs.Difference(ors).List()
-
-			// DELETE old Request Settings configurations
-			for _, sRaw := range removeRequestSettings {
-				sf := sRaw.(map[string]interface{})
-				opts := gofastly.DeleteRequestSettingInput{
-					Service: d.Id(),
-					Version: latestVersion,
-					Name:    sf["name"].(string),
-				}
-
-				log.Printf("[DEBUG] Fastly Request Setting removal opts: %#v", opts)
-				err := conn.DeleteRequestSetting(&opts)
-				if err != nil {
-					return err
-				}
-			}
-
-			// POST new/updated Request Setting
-			for _, sRaw := range addRequestSettings {
-				opts, err := buildRequestSetting(sRaw.(map[string]interface{}))
-				if err != nil {
-					log.Printf("[DEBUG] Error building Requset Setting: %s", err)
-					return err
-				}
-				opts.Service = d.Id()
-				opts.Version = latestVersion
-
-				log.Printf("[DEBUG] Create Request Setting Opts: %#v", opts)
-				_, err = conn.CreateRequestSetting(opts)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		// Find differences in VCLs
-		if d.HasChange("vcl") {
-			// Note: as above with Gzip and S3 logging, we don't utilize the PUT
-			// endpoint to update a VCL, we simply destroy it and create a new one.
-			oldVCLVal, newVCLVal := d.GetChange("vcl")
-			if oldVCLVal == nil {
-				oldVCLVal = new(schema.Set)
-			}
-			if newVCLVal == nil {
-				newVCLVal = new(schema.Set)
-			}
-
-			oldVCLSet := oldVCLVal.(*schema.Set)
-			newVCLSet := newVCLVal.(*schema.Set)
-
-			remove := oldVCLSet.Difference(newVCLSet).List()
-			add := newVCLSet.Difference(oldVCLSet).List()
-
-			// Delete removed VCL configurations
-			for _, dRaw := range remove {
-				df := dRaw.(map[string]interface{})
-				opts := gofastly.DeleteVCLInput{
-					Service: d.Id(),
-					Version: latestVersion,
-					Name:    df["name"].(string),
-				}
-
-				log.Printf("[DEBUG] Fastly VCL Removal opts: %#v", opts)
-				err := conn.DeleteVCL(&opts)
-				if err != nil {
-					return err
-				}
-			}
-			// POST new VCL configurations
-			for _, dRaw := range add {
-				df := dRaw.(map[string]interface{})
-				opts := gofastly.CreateVCLInput{
-					Service: d.Id(),
-					Version: latestVersion,
-					Name:    df["name"].(string),
-					Content: df["content"].(string),
-				}
-
-				log.Printf("[DEBUG] Fastly VCL Addition opts: %#v", opts)
-				_, err := conn.CreateVCL(&opts)
-				if err != nil {
-					return err
-				}
-
-				// if this new VCL is the main
-				if df["main"].(bool) {
-					opts := gofastly.ActivateVCLInput{
-						Service: d.Id(),
-						Version: latestVersion,
-						Name:    df["name"].(string),
-					}
-					log.Printf("[DEBUG] Fastly VCL activation opts: %#v", opts)
-					_, err := conn.ActivateVCL(&opts)
-					if err != nil {
-						return err
-					}
-
-				}
-			}
-		}
-
-		// Find differences in Cache Settings
-		if d.HasChange("cache_setting") {
-			oc, nc := d.GetChange("cache_setting")
-			if oc == nil {
-				oc = new(schema.Set)
-			}
-			if nc == nil {
-				nc = new(schema.Set)
-			}
-
-			ocs := oc.(*schema.Set)
-			ncs := nc.(*schema.Set)
-
-			remove := ocs.Difference(ncs).List()
-			add := ncs.Difference(ocs).List()
-
-			// Delete removed Cache Settings
-			for _, dRaw := range remove {
-				df := dRaw.(map[string]interface{})
-				opts := gofastly.DeleteCacheSettingInput{
-					Service: d.Id(),
-					Version: latestVersion,
-					Name:    df["name"].(string),
-				}
-
-				log.Printf("[DEBUG] Fastly Cache Settings removal opts: %#v", opts)
-				err := conn.DeleteCacheSetting(&opts)
-				if err != nil {
-					return err
-				}
-			}
-
-			// POST new Cache Settings
-			for _, dRaw := range add {
-				opts, err := buildCacheSetting(dRaw.(map[string]interface{}))
-				if err != nil {
-					log.Printf("[DEBUG] Error building Cache Setting: %s", err)
-					return err
-				}
-				opts.Service = d.Id()
-				opts.Version = latestVersion
-
-				log.Printf("[DEBUG] Fastly Cache Settings Addition opts: %#v", opts)
-				_, err = conn.CreateCacheSetting(opts)
 				if err != nil {
 					return err
 				}
@@ -1322,89 +804,6 @@ func resourceServiceV1Read(d *schema.ResourceData, meta interface{}) error {
 
 		if err := d.Set("gzip", gl); err != nil {
 			log.Printf("[WARN] Error setting Gzips for (%s): %s", d.Id(), err)
-		}
-
-		// refresh S3 Logging
-		log.Printf("[DEBUG] Refreshing S3 Logging for (%s)", d.Id())
-		s3List, err := conn.ListS3s(&gofastly.ListS3sInput{
-			Service: d.Id(),
-			Version: s.ActiveVersion.Number,
-		})
-
-		if err != nil {
-			return fmt.Errorf("[ERR] Error looking up S3 Logging for (%s), version (%s): %s", d.Id(), s.ActiveVersion.Number, err)
-		}
-
-		sl := flattenS3s(s3List)
-
-		if err := d.Set("s3logging", sl); err != nil {
-			log.Printf("[WARN] Error setting S3 Logging for (%s): %s", d.Id(), err)
-		}
-
-		// refresh Conditions
-		log.Printf("[DEBUG] Refreshing Conditions for (%s)", d.Id())
-		conditionList, err := conn.ListConditions(&gofastly.ListConditionsInput{
-			Service: d.Id(),
-			Version: s.ActiveVersion.Number,
-		})
-
-		if err != nil {
-			return fmt.Errorf("[ERR] Error looking up Conditions for (%s), version (%s): %s", d.Id(), s.ActiveVersion.Number, err)
-		}
-
-		cl := flattenConditions(conditionList)
-
-		if err := d.Set("condition", cl); err != nil {
-			log.Printf("[WARN] Error setting Conditions for (%s): %s", d.Id(), err)
-		}
-
-		// refresh Request Settings
-		log.Printf("[DEBUG] Refreshing Request Settings for (%s)", d.Id())
-		rsList, err := conn.ListRequestSettings(&gofastly.ListRequestSettingsInput{
-			Service: d.Id(),
-			Version: s.ActiveVersion.Number,
-		})
-
-		if err != nil {
-			return fmt.Errorf("[ERR] Error looking up Request Settings for (%s), version (%s): %s", d.Id(), s.ActiveVersion.Number, err)
-		}
-
-		rl := flattenRequestSettings(rsList)
-
-		if err := d.Set("request_setting", rl); err != nil {
-			log.Printf("[WARN] Error setting Request Settings for (%s): %s", d.Id(), err)
-		}
-
-		// refresh VCLs
-		log.Printf("[DEBUG] Refreshing VCLs for (%s)", d.Id())
-		vclList, err := conn.ListVCLs(&gofastly.ListVCLsInput{
-			Service: d.Id(),
-			Version: s.ActiveVersion.Number,
-		})
-		if err != nil {
-			return fmt.Errorf("[ERR] Error looking up VCLs for (%s), version (%s): %s", d.Id(), s.ActiveVersion.Number, err)
-		}
-
-		vl := flattenVCLs(vclList)
-
-		if err := d.Set("vcl", vl); err != nil {
-			log.Printf("[WARN] Error setting VCLs for (%s): %s", d.Id(), err)
-		}
-
-		// refresh Cache Settings
-		log.Printf("[DEBUG] Refreshing Cache Settings for (%s)", d.Id())
-		cslList, err := conn.ListCacheSettings(&gofastly.ListCacheSettingsInput{
-			Service: d.Id(),
-			Version: s.ActiveVersion.Number,
-		})
-		if err != nil {
-			return fmt.Errorf("[ERR] Error looking up Cache Settings for (%s), version (%s): %s", d.Id(), s.ActiveVersion.Number, err)
-		}
-
-		csl := flattenCacheSettings(cslList)
-
-		if err := d.Set("cache_setting", csl); err != nil {
-			log.Printf("[WARN] Error setting Cache Settings for (%s): %s", d.Id(), err)
 		}
 
 	} else {
@@ -1606,31 +1005,6 @@ func buildHeader(headerMap interface{}) (*gofastly.CreateHeaderInput, error) {
 	return &opts, nil
 }
 
-func buildCacheSetting(cacheMap interface{}) (*gofastly.CreateCacheSettingInput, error) {
-	df := cacheMap.(map[string]interface{})
-	opts := gofastly.CreateCacheSettingInput{
-		Name:           df["name"].(string),
-		StaleTTL:       uint(df["stale_ttl"].(int)),
-		CacheCondition: df["cache_condition"].(string),
-	}
-
-	if v, ok := df["ttl"]; ok {
-		opts.TTL = uint(v.(int))
-	}
-
-	act := strings.ToLower(df["action"].(string))
-	switch act {
-	case "cache":
-		opts.Action = gofastly.CacheSettingActionCache
-	case "pass":
-		opts.Action = gofastly.CacheSettingActionPass
-	case "restart":
-		opts.Action = gofastly.CacheSettingActionRestart
-	}
-
-	return &opts, nil
-}
-
 func flattenGzips(gzipsList []*gofastly.Gzip) []map[string]interface{} {
 	var gl []map[string]interface{}
 	for _, g := range gzipsList {
@@ -1640,7 +1014,11 @@ func flattenGzips(gzipsList []*gofastly.Gzip) []map[string]interface{} {
 			"cache_condition": g.CacheCondition,
 		}
 
-		if g.Extensions != "" {
+		// Fastly API provides default values for Extensions or ContentTypes, in the
+		// event that you do not specify them. To work around this, if they are
+		// omitted we'll use an empty space as a sentinel value to indicate not to
+		// include them, and filter on that
+		if g.Extensions != "" && g.Extensions != " " {
 			e := strings.Split(g.Extensions, " ")
 			var et []interface{}
 			for _, ev := range e {
@@ -1649,7 +1027,7 @@ func flattenGzips(gzipsList []*gofastly.Gzip) []map[string]interface{} {
 			ng["extensions"] = schema.NewSet(schema.HashString, et)
 		}
 
-		if g.ContentTypes != "" {
+		if g.ContentTypes != "" && g.ContentTypes != " " {
 			c := strings.Split(g.ContentTypes, " ")
 			var ct []interface{}
 			for _, cv := range c {
@@ -1669,204 +1047,4 @@ func flattenGzips(gzipsList []*gofastly.Gzip) []map[string]interface{} {
 	}
 
 	return gl
-}
-
-func flattenS3s(s3List []*gofastly.S3) []map[string]interface{} {
-	var sl []map[string]interface{}
-	for _, s := range s3List {
-		// Convert S3s to a map for saving to state.
-		ns := map[string]interface{}{
-			"name":             s.Name,
-			"bucket_name":      s.BucketName,
-			"s3_access_key":    s.AccessKey,
-			"s3_secret_key":    s.SecretKey,
-			"path":             s.Path,
-			"period":           s.Period,
-			"domain":           s.Domain,
-			"gzip_level":       s.GzipLevel,
-			"format":           s.Format,
-			"timestamp_format": s.TimestampFormat,
-		}
-
-		// prune any empty values that come from the default string value in structs
-		for k, v := range ns {
-			if v == "" {
-				delete(ns, k)
-			}
-		}
-
-		sl = append(sl, ns)
-	}
-
-	return sl
-}
-
-func flattenConditions(conditionList []*gofastly.Condition) []map[string]interface{} {
-	var cl []map[string]interface{}
-	for _, c := range conditionList {
-		// Convert Conditions to a map for saving to state.
-		nc := map[string]interface{}{
-			"name":      c.Name,
-			"statement": c.Statement,
-			"type":      c.Type,
-			"priority":  c.Priority,
-		}
-
-		// prune any empty values that come from the default string value in structs
-		for k, v := range nc {
-			if v == "" {
-				delete(nc, k)
-			}
-		}
-
-		cl = append(cl, nc)
-	}
-
-	return cl
-}
-
-func flattenRequestSettings(rsList []*gofastly.RequestSetting) []map[string]interface{} {
-	var rl []map[string]interface{}
-	for _, r := range rsList {
-		// Convert Request Settings to a map for saving to state.
-		nrs := map[string]interface{}{
-			"name":              r.Name,
-			"max_stale_age":     r.MaxStaleAge,
-			"force_miss":        r.ForceMiss,
-			"force_ssl":         r.ForceSSL,
-			"action":            r.Action,
-			"bypass_busy_wait":  r.BypassBusyWait,
-			"hash_keys":         r.HashKeys,
-			"xff":               r.XForwardedFor,
-			"timer_support":     r.TimerSupport,
-			"geo_headers":       r.GeoHeaders,
-			"default_host":      r.DefaultHost,
-			"request_condition": r.RequestCondition,
-		}
-
-		// prune any empty values that come from the default string value in structs
-		for k, v := range nrs {
-			if v == "" {
-				delete(nrs, k)
-			}
-		}
-
-		rl = append(rl, nrs)
-	}
-
-	return rl
-}
-
-func buildRequestSetting(requestSettingMap interface{}) (*gofastly.CreateRequestSettingInput, error) {
-	df := requestSettingMap.(map[string]interface{})
-	opts := gofastly.CreateRequestSettingInput{
-		Name:             df["name"].(string),
-		MaxStaleAge:      uint(df["max_stale_age"].(int)),
-		ForceMiss:        gofastly.Compatibool(df["force_miss"].(bool)),
-		ForceSSL:         gofastly.Compatibool(df["force_ssl"].(bool)),
-		BypassBusyWait:   gofastly.Compatibool(df["bypass_busy_wait"].(bool)),
-		HashKeys:         df["hash_keys"].(string),
-		TimerSupport:     gofastly.Compatibool(df["timer_support"].(bool)),
-		GeoHeaders:       gofastly.Compatibool(df["geo_headers"].(bool)),
-		DefaultHost:      df["default_host"].(string),
-		RequestCondition: df["request_condition"].(string),
-	}
-
-	act := strings.ToLower(df["action"].(string))
-	switch act {
-	case "lookup":
-		opts.Action = gofastly.RequestSettingActionLookup
-	case "pass":
-		opts.Action = gofastly.RequestSettingActionPass
-	}
-
-	xff := strings.ToLower(df["xff"].(string))
-	switch xff {
-	case "clear":
-		opts.XForwardedFor = gofastly.RequestSettingXFFClear
-	case "leave":
-		opts.XForwardedFor = gofastly.RequestSettingXFFLeave
-	case "append":
-		opts.XForwardedFor = gofastly.RequestSettingXFFAppend
-	case "append_all":
-		opts.XForwardedFor = gofastly.RequestSettingXFFAppendAll
-	case "overwrite":
-		opts.XForwardedFor = gofastly.RequestSettingXFFOverwrite
-	}
-
-	return &opts, nil
-}
-
-func flattenCacheSettings(csList []*gofastly.CacheSetting) []map[string]interface{} {
-	var csl []map[string]interface{}
-	for _, cl := range csList {
-		// Convert Cache Settings to a map for saving to state.
-		clMap := map[string]interface{}{
-			"name":            cl.Name,
-			"action":          cl.Action,
-			"cache_condition": cl.CacheCondition,
-			"stale_ttl":       cl.StaleTTL,
-			"ttl":             cl.TTL,
-		}
-
-		// prune any empty values that come from the default string value in structs
-		for k, v := range clMap {
-			if v == "" {
-				delete(clMap, k)
-			}
-		}
-
-		csl = append(csl, clMap)
-	}
-
-	return csl
-}
-
-func flattenVCLs(vclList []*gofastly.VCL) []map[string]interface{} {
-	var vl []map[string]interface{}
-	for _, vcl := range vclList {
-		// Convert VCLs to a map for saving to state.
-		vclMap := map[string]interface{}{
-			"name":    vcl.Name,
-			"content": vcl.Content,
-			"main":    vcl.Main,
-		}
-
-		// prune any empty values that come from the default string value in structs
-		for k, v := range vclMap {
-			if v == "" {
-				delete(vclMap, k)
-			}
-		}
-
-		vl = append(vl, vclMap)
-	}
-
-	return vl
-}
-
-func validateVCLs(d *schema.ResourceData) error {
-	// TODO: this would be nice to move into a resource/collection validation function, once that is available
-	// (see https://github.com/hashicorp/terraform/pull/4348 and https://github.com/hashicorp/terraform/pull/6508)
-	vcls, exists := d.GetOk("vcl")
-	if !exists {
-		return nil
-	}
-
-	numberOfMainVCLs, numberOfIncludeVCLs := 0, 0
-	for _, vclElem := range vcls.(*schema.Set).List() {
-		vcl := vclElem.(map[string]interface{})
-		if mainVal, hasMain := vcl["main"]; hasMain && mainVal.(bool) {
-			numberOfMainVCLs++
-		} else {
-			numberOfIncludeVCLs++
-		}
-	}
-	if numberOfMainVCLs == 0 && numberOfIncludeVCLs > 0 {
-		return fmt.Errorf("if you include VCL configurations, one of them should have main = true")
-	}
-	if numberOfMainVCLs > 1 {
-		return fmt.Errorf("you cannot have more than one VCL configuration with main = true")
-	}
-	return nil
 }

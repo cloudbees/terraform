@@ -61,7 +61,7 @@ func resourceAwsAutoscalingPolicy() *schema.Resource {
 			"min_adjustment_step": &schema.Schema{
 				Type:          schema.TypeInt,
 				Optional:      true,
-				Deprecated:    "Use min_adjustment_magnitude instead, otherwise you may see a perpetual diff on this resource.",
+				Deprecated:    "Use min_adjustment_magnitude instead.",
 				ConflictsWith: []string{"min_adjustment_magnitude"},
 			},
 			"scaling_adjustment": &schema.Schema{
@@ -126,7 +126,7 @@ func resourceAwsAutoscalingPolicyRead(d *schema.ResourceData, meta interface{}) 
 		return nil
 	}
 
-	log.Printf("[DEBUG] Read Scaling Policy: ASG: %s, SP: %s, Obj: %s", d.Get("autoscaling_group_name"), d.Get("name"), p)
+	log.Printf("[DEBUG] Read Scaling Policy: ASG: %s, SP: %s, Obj: %#v", d.Get("autoscaling_group_name"), d.Get("name"), p)
 
 	d.Set("adjustment_type", p.AdjustmentType)
 	d.Set("autoscaling_group_name", p.AutoScalingGroupName)
@@ -134,12 +134,8 @@ func resourceAwsAutoscalingPolicyRead(d *schema.ResourceData, meta interface{}) 
 	d.Set("estimated_instance_warmup", p.EstimatedInstanceWarmup)
 	d.Set("metric_aggregation_type", p.MetricAggregationType)
 	d.Set("policy_type", p.PolicyType)
-	if p.MinAdjustmentMagnitude != nil {
-		d.Set("min_adjustment_magnitude", p.MinAdjustmentMagnitude)
-		d.Set("min_adjustment_step", 0)
-	} else {
-		d.Set("min_adjustment_step", p.MinAdjustmentStep)
-	}
+	d.Set("min_adjustment_magnitude", p.MinAdjustmentMagnitude)
+	d.Set("min_adjustment_step", p.MinAdjustmentStep)
 	d.Set("arn", p.PolicyARN)
 	d.Set("name", p.PolicyName)
 	d.Set("scaling_adjustment", p.ScalingAdjustment)
@@ -179,7 +175,6 @@ func resourceAwsAutoscalingPolicyDelete(d *schema.ResourceData, meta interface{}
 		AutoScalingGroupName: aws.String(d.Get("autoscaling_group_name").(string)),
 		PolicyName:           aws.String(d.Get("name").(string)),
 	}
-	log.Printf("[DEBUG] Deleting Autoscaling Policy opts: %s", params)
 	if _, err := autoscalingconn.DeletePolicy(&params); err != nil {
 		return fmt.Errorf("Autoscaling Scaling Policy: %s ", err)
 	}
@@ -230,10 +225,10 @@ func getAwsAutoscalingPutScalingPolicyInput(d *schema.ResourceData) (autoscaling
 	}
 
 	if v, ok := d.GetOk("min_adjustment_magnitude"); ok {
-		// params.MinAdjustmentMagnitude = aws.Int64(int64(d.Get("min_adjustment_magnitude").(int)))
 		params.MinAdjustmentMagnitude = aws.Int64(int64(v.(int)))
-	} else if v, ok := d.GetOk("min_adjustment_step"); ok {
-		// params.MinAdjustmentStep = aws.Int64(int64(d.Get("min_adjustment_step").(int)))
+	}
+
+	if v, ok := d.GetOk("min_adjustment_step"); ok {
 		params.MinAdjustmentStep = aws.Int64(int64(v.(int)))
 	}
 

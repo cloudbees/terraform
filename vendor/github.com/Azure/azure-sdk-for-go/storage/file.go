@@ -49,6 +49,7 @@ func (f FileServiceClient) CreateShareIfNotExists(name string) (bool, error) {
 func (f FileServiceClient) createShare(name string) (*storageResponse, error) {
 	uri := f.client.getEndpoint(fileServiceName, pathForFileShare(name), url.Values{"restype": {"share"}})
 	headers := f.client.getStandardHeaders()
+	headers["Content-Length"] = "0"
 	return f.client.exec("PUT", uri, headers, nil)
 }
 

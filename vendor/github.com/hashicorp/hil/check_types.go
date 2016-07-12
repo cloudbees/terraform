@@ -199,7 +199,7 @@ func (tc *typeCheckCall) TypeCheck(v *TypeCheck) (ast.Node, error) {
 
 			return nil, fmt.Errorf(
 				"%s: argument %d should be %s, got %s",
-				tc.n.Func, i+1, expected.Printable(), args[i].Printable())
+				tc.n.Func, i+1, expected, args[i])
 		}
 	}
 
@@ -219,7 +219,7 @@ func (tc *typeCheckCall) TypeCheck(v *TypeCheck) (ast.Node, error) {
 				return nil, fmt.Errorf(
 					"%s: argument %d should be %s, got %s",
 					tc.n.Func, realI,
-					function.VariadicType.Printable(), t.Printable())
+					function.VariadicType, t)
 			}
 		}
 	}

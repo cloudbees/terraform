@@ -14,6 +14,7 @@ Provides a Redshift Cluster parameter group resource.
 resource "aws_redshift_parameter_group" "bar" {
 	name = "parameter-group-test-terraform"
 	family = "redshift-1.0"
+	description = "Test parameter group for terraform"
 	parameter {
 	  name = "require_ssl"
 	  value = "true"
@@ -35,7 +36,7 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the Redshift parameter group.
 * `family` - (Required) The family of the Redshift parameter group.
-* `description` - (Optional) The description of the Redshift parameter group. Defaults to "Managed by Terraform".
+* `description` - (Required) The description of the Redshift parameter group.
 * `parameter` - (Optional) A list of Redshift parameters to apply.
 
 Parameter blocks support the following:

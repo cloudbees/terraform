@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/management"
-	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -13,20 +12,16 @@ import (
 func TestAccAzureDnsServerBasic(t *testing.T) {
 	name := "azure_dns_server.foo"
 
-	random := acctest.RandInt()
-	config := testAccAzureDnsServerBasic(random)
-	serverName := fmt.Sprintf("tf-dns-server-%d", random)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAzureDnsServerDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: config,
+				Config: testAccAzureDnsServerBasic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAzureDnsServerExists(name),
-					resource.TestCheckResourceAttr(name, "name", serverName),
+					resource.TestCheckResourceAttr(name, "name", "terraform-dns-server"),
 					resource.TestCheckResourceAttr(name, "dns_address", "8.8.8.8"),
 				),
 			},
@@ -37,30 +32,25 @@ func TestAccAzureDnsServerBasic(t *testing.T) {
 func TestAccAzureDnsServerUpdate(t *testing.T) {
 	name := "azure_dns_server.foo"
 
-	random := acctest.RandInt()
-	basicConfig := testAccAzureDnsServerBasic(random)
-	updateConfig := testAccAzureDnsServerUpdate(random)
-	serverName := fmt.Sprintf("tf-dns-server-%d", random)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAzureDnsServerDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: basicConfig,
+				Config: testAccAzureDnsServerBasic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAzureDnsServerExists(name),
-					resource.TestCheckResourceAttr(name, "name", serverName),
+					resource.TestCheckResourceAttr(name, "name", "terraform-dns-server"),
 					resource.TestCheckResourceAttr(name, "dns_address", "8.8.8.8"),
 				),
 			},
 
 			resource.TestStep{
-				Config: updateConfig,
+				Config: testAccAzureDnsServerUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAzureDnsServerExists(name),
-					resource.TestCheckResourceAttr(name, "name", serverName),
+					resource.TestCheckResourceAttr(name, "name", "terraform-dns-server"),
 					resource.TestCheckResourceAttr(name, "dns_address", "8.8.4.4"),
 				),
 			},
@@ -126,20 +116,16 @@ func testAccCheckAzureDnsServerDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccAzureDnsServerBasic(random int) string {
-	return fmt.Sprintf(`
+const testAccAzureDnsServerBasic = `
 resource "azure_dns_server" "foo" {
-    name = "tf-dns-server-%d"
+    name = "terraform-dns-server"
     dns_address = "8.8.8.8"
 }
-`, random)
-}
+`
 
-func testAccAzureDnsServerUpdate(random int) string {
-	return fmt.Sprintf(`
+const testAccAzureDnsServerUpdate = `
 resource "azure_dns_server" "foo" {
-    name = "tf-dns-server-%d"
+    name = "terraform-dns-server"
     dns_address = "8.8.4.4"
 }
-`, random)
-}
+`

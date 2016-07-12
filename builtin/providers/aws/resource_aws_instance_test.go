@@ -1045,9 +1045,6 @@ resource "aws_instance" "foo" {
   ami = "ami-408c7f28"
   instance_type = "t1.micro"
   key_name = "${aws_key_pair.debugging.key_name}"
-	tags {
-		Name = "testAccInstanceConfigKeyPair_TestAMI"
-	}
 }
 `
 

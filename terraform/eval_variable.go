@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/config"
 	"github.com/hashicorp/terraform/config/module"
-	"github.com/hashicorp/terraform/helper/hilmapstructure"
+	"github.com/mitchellh/mapstructure"
 )
 
 // EvalTypeCheckVariable is an EvalNode which ensures that the variable
@@ -25,7 +26,7 @@ import (
 // use of the values since it is only valid to pass string values. The
 // structure is in place for extension of the type system, however.
 type EvalTypeCheckVariable struct {
-	Variables  map[string]interface{}
+	Variables  map[string]string
 	ModulePath []string
 	ModuleTree *module.Tree
 }
@@ -42,25 +43,15 @@ func (n *EvalTypeCheckVariable) Eval(ctx EvalContext) (interface{}, error) {
 		prototypes[variable.Name] = variable.Type()
 	}
 
-	// Only display a module in an error message if we are not in the root module
-	modulePathDescription := fmt.Sprintf(" in module %s", strings.Join(n.ModulePath[1:], "."))
-	if len(n.ModulePath) == 1 {
-		modulePathDescription = ""
-	}
-
 	for name, declaredType := range prototypes {
 		// This is only necessary when we _actually_ check. It is left as a reminder
 		// that at the current time we are dealing with a type system consisting only
 		// of strings and maps - where the only valid inter-module variable type is
 		// string.
-		proposedValue, ok := n.Variables[name]
+		_, ok := n.Variables[name]
 		if !ok {
 			// This means the default value should be used as no overriding value
 			// has been set. Therefore we should continue as no check is necessary.
-			continue
-		}
-
-		if proposedValue == config.UnknownVariableValue {
 			continue
 		}
 
@@ -68,30 +59,13 @@ func (n *EvalTypeCheckVariable) Eval(ctx EvalContext) (interface{}, error) {
 		case config.VariableTypeString:
 			// This will need actual verification once we aren't dealing with
 			// a map[string]string but this is sufficient for now.
-			switch proposedValue.(type) {
-			case string:
-				continue
-			default:
-				return nil, fmt.Errorf("variable %s%s should be type %s, got %T",
-					name, modulePathDescription, declaredType.Printable(), proposedValue)
-			}
-		case config.VariableTypeMap:
-			switch proposedValue.(type) {
-			case map[string]interface{}:
-				continue
-			default:
-				return nil, fmt.Errorf("variable %s%s should be type %s, got %T",
-					name, modulePathDescription, declaredType.Printable(), proposedValue)
-			}
-		case config.VariableTypeList:
-			switch proposedValue.(type) {
-			case []interface{}:
-				continue
-			default:
-				return nil, fmt.Errorf("variable %s%s should be type %s, got %T",
-					name, modulePathDescription, declaredType.Printable(), proposedValue)
-			}
+			continue
 		default:
+			// Only display a module if we are not in the root module
+			modulePathDescription := fmt.Sprintf(" in module %s", strings.Join(n.ModulePath[1:], "."))
+			if len(n.ModulePath) == 1 {
+				modulePathDescription = ""
+			}
 			// This will need the actual type substituting when we have more than
 			// just strings and maps.
 			return nil, fmt.Errorf("variable %s%s should be type %s, got type string",
@@ -106,7 +80,7 @@ func (n *EvalTypeCheckVariable) Eval(ctx EvalContext) (interface{}, error) {
 // explicitly for interpolation later.
 type EvalSetVariables struct {
 	Module    *string
-	Variables map[string]interface{}
+	Variables map[string]string
 }
 
 // TODO: test
@@ -119,43 +93,31 @@ func (n *EvalSetVariables) Eval(ctx EvalContext) (interface{}, error) {
 // given configuration, and uses the final values as a way to set the
 // mapping.
 type EvalVariableBlock struct {
-	Config         **ResourceConfig
-	VariableValues map[string]interface{}
+	Config    **ResourceConfig
+	Variables map[string]string
 }
 
 // TODO: test
 func (n *EvalVariableBlock) Eval(ctx EvalContext) (interface{}, error) {
 	// Clear out the existing mapping
-	for k, _ := range n.VariableValues {
-		delete(n.VariableValues, k)
+	for k, _ := range n.Variables {
+		delete(n.Variables, k)
 	}
 
 	// Get our configuration
 	rc := *n.Config
 	for k, v := range rc.Config {
-		var vString string
-		if err := hilmapstructure.WeakDecode(v, &vString); err == nil {
-			n.VariableValues[k] = vString
-			continue
+		var vStr string
+		if err := mapstructure.WeakDecode(v, &vStr); err != nil {
+			return nil, errwrap.Wrapf(fmt.Sprintf(
+				"%s: error reading value: {{err}}", k), err)
 		}
 
-		var vMap map[string]interface{}
-		if err := hilmapstructure.WeakDecode(v, &vMap); err == nil {
-			n.VariableValues[k] = vMap
-			continue
-		}
-
-		var vSlice []interface{}
-		if err := hilmapstructure.WeakDecode(v, &vSlice); err == nil {
-			n.VariableValues[k] = vSlice
-			continue
-		}
-
-		return nil, fmt.Errorf("Variable value for %s is not a string, list or map type", k)
+		n.Variables[k] = vStr
 	}
 	for k, _ := range rc.Raw {
-		if _, ok := n.VariableValues[k]; !ok {
-			n.VariableValues[k] = config.UnknownVariableValue
+		if _, ok := n.Variables[k]; !ok {
+			n.Variables[k] = config.UnknownVariableValue
 		}
 	}
 

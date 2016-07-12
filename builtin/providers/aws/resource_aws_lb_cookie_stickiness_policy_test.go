@@ -8,20 +8,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/elb"
 
-	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccAWSLBCookieStickinessPolicy_basic(t *testing.T) {
-	lbName := fmt.Sprintf("tf-test-lb-%s", acctest.RandString(5))
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckLBCookieStickinessPolicyDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccLBCookieStickinessPolicyConfig(lbName),
+				Config: testAccLBCookieStickinessPolicyConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLBCookieStickinessPolicy(
 						"aws_elb.lb",
@@ -30,7 +28,7 @@ func TestAccAWSLBCookieStickinessPolicy_basic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				Config: testAccLBCookieStickinessPolicyConfigUpdate(lbName),
+				Config: testAccLBCookieStickinessPolicyConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckLBCookieStickinessPolicy(
 						"aws_elb.lb",
@@ -102,10 +100,9 @@ func testAccCheckLBCookieStickinessPolicy(elbResource string, policyResource str
 	}
 }
 
-func testAccLBCookieStickinessPolicyConfig(rName string) string {
-	return fmt.Sprintf(`
+const testAccLBCookieStickinessPolicyConfig = `
 resource "aws_elb" "lb" {
-	name = "%s"
+	name = "test-lb"
 	availability_zones = ["us-west-2a"]
 	listener {
 		instance_port = 8000
@@ -119,14 +116,13 @@ resource "aws_lb_cookie_stickiness_policy" "foo" {
 	name = "foo-policy"
 	load_balancer = "${aws_elb.lb.id}"
 	lb_port = 80
-}`, rName)
 }
+`
 
 // Sets the cookie_expiration_period to 300s.
-func testAccLBCookieStickinessPolicyConfigUpdate(rName string) string {
-	return fmt.Sprintf(`
+const testAccLBCookieStickinessPolicyConfigUpdate = `
 resource "aws_elb" "lb" {
-	name = "%s"
+	name = "test-lb"
 	availability_zones = ["us-west-2a"]
 	listener {
 		instance_port = 8000
@@ -141,5 +137,5 @@ resource "aws_lb_cookie_stickiness_policy" "foo" {
 	load_balancer = "${aws_elb.lb.id}"
 	lb_port = 80
 	cookie_expiration_period = 300
-}`, rName)
 }
+`

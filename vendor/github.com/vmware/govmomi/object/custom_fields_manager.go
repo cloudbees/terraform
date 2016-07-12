@@ -69,7 +69,7 @@ func (m CustomFieldsManager) Add(ctx context.Context, name string, moType string
 	return &res.Returnval, nil
 }
 
-func (m CustomFieldsManager) Remove(ctx context.Context, key int32) error {
+func (m CustomFieldsManager) Remove(ctx context.Context, key int) error {
 	req := types.RemoveCustomFieldDef{
 		This: m.Reference(),
 		Key:  key,
@@ -79,7 +79,7 @@ func (m CustomFieldsManager) Remove(ctx context.Context, key int32) error {
 	return err
 }
 
-func (m CustomFieldsManager) Rename(ctx context.Context, key int32, name string) error {
+func (m CustomFieldsManager) Rename(ctx context.Context, key int, name string) error {
 	req := types.RenameCustomFieldDef{
 		This: m.Reference(),
 		Key:  key,
@@ -90,7 +90,7 @@ func (m CustomFieldsManager) Rename(ctx context.Context, key int32, name string)
 	return err
 }
 
-func (m CustomFieldsManager) Set(ctx context.Context, entity types.ManagedObjectReference, key int32, value string) error {
+func (m CustomFieldsManager) Set(ctx context.Context, entity types.ManagedObjectReference, key int, value string) error {
 	req := types.SetField{
 		This:   m.Reference(),
 		Entity: entity,
@@ -113,7 +113,7 @@ func (m CustomFieldsManager) Field(ctx context.Context) ([]types.CustomFieldDef,
 	return fm.Field, nil
 }
 
-func (m CustomFieldsManager) FindKey(ctx context.Context, key string) (int32, error) {
+func (m CustomFieldsManager) FindKey(ctx context.Context, key string) (int, error) {
 	field, err := m.Field(ctx)
 	if err != nil {
 		return -1, err
@@ -128,7 +128,7 @@ func (m CustomFieldsManager) FindKey(ctx context.Context, key string) (int32, er
 	k, err := strconv.Atoi(key)
 	if err == nil {
 		// assume literal int key
-		return int32(k), nil
+		return k, nil
 	}
 
 	return -1, ErrKeyNameNotFound

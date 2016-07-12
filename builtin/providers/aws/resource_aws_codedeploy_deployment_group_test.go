@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/codedeploy"
-	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -19,21 +18,19 @@ import (
 func TestAccAWSCodeDeployDeploymentGroup_basic(t *testing.T) {
 	var group codedeploy.DeploymentGroupInfo
 
-	rName := acctest.RandString(5)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAWSCodeDeployDeploymentGroupDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccAWSCodeDeployDeploymentGroup(rName),
+				Config: testAccAWSCodeDeployDeploymentGroup,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeDeployDeploymentGroupExists("aws_codedeploy_deployment_group.foo", &group),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "app_name", "foo_app_"+rName),
+						"aws_codedeploy_deployment_group.foo", "app_name", "foo_app"),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "deployment_group_name", "foo_"+rName),
+						"aws_codedeploy_deployment_group.foo", "deployment_group_name", "foo"),
 					resource.TestCheckResourceAttr(
 						"aws_codedeploy_deployment_group.foo", "deployment_config_name", "CodeDeployDefault.OneAtATime"),
 
@@ -48,13 +45,13 @@ func TestAccAWSCodeDeployDeploymentGroup_basic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				Config: testAccAWSCodeDeployDeploymentGroupModified(rName),
+				Config: testAccAWSCodeDeployDeploymentGroupModified,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeDeployDeploymentGroupExists("aws_codedeploy_deployment_group.foo", &group),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "app_name", "foo_app_"+rName),
+						"aws_codedeploy_deployment_group.foo", "app_name", "foo_app"),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "deployment_group_name", "bar_"+rName),
+						"aws_codedeploy_deployment_group.foo", "deployment_group_name", "bar"),
 					resource.TestCheckResourceAttr(
 						"aws_codedeploy_deployment_group.foo", "deployment_config_name", "CodeDeployDefault.OneAtATime"),
 
@@ -72,72 +69,35 @@ func TestAccAWSCodeDeployDeploymentGroup_basic(t *testing.T) {
 	})
 }
 
-func TestAccAWSCodeDeployDeploymentGroup_onPremiseTag(t *testing.T) {
-	var group codedeploy.DeploymentGroupInfo
-
-	rName := acctest.RandString(5)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAWSCodeDeployDeploymentGroupDestroy,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccAWSCodeDeployDeploymentGroupOnPremiseTags(rName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAWSCodeDeployDeploymentGroupExists("aws_codedeploy_deployment_group.foo", &group),
-					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "app_name", "foo_app_"+rName),
-					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "deployment_group_name", "foo_"+rName),
-					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "deployment_config_name", "CodeDeployDefault.OneAtATime"),
-
-					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "on_premises_instance_tag_filter.#", "1"),
-					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "on_premises_instance_tag_filter.2916377465.key", "filterkey"),
-					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "on_premises_instance_tag_filter.2916377465.type", "KEY_AND_VALUE"),
-					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo", "on_premises_instance_tag_filter.2916377465.value", "filtervalue"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccAWSCodeDeployDeploymentGroup_triggerConfiguration_basic(t *testing.T) {
 	var group codedeploy.DeploymentGroupInfo
 
-	rName := acctest.RandString(5)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAWSCodeDeployDeploymentGroupDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_create(rName),
+				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_create,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeDeployDeploymentGroupExists("aws_codedeploy_deployment_group.foo_group", &group),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app"),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group"),
 					testAccCheckTriggerEvents(&group, "foo-trigger", []string{
 						"DeploymentFailure",
 					}),
 				),
 			},
 			resource.TestStep{
-				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_update(rName),
+				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_update,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeDeployDeploymentGroupExists("aws_codedeploy_deployment_group.foo_group", &group),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app"),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group"),
 					testAccCheckTriggerEvents(&group, "foo-trigger", []string{
 						"DeploymentFailure",
 						"DeploymentSuccess",
@@ -151,21 +111,19 @@ func TestAccAWSCodeDeployDeploymentGroup_triggerConfiguration_basic(t *testing.T
 func TestAccAWSCodeDeployDeploymentGroup_triggerConfiguration_multiple(t *testing.T) {
 	var group codedeploy.DeploymentGroupInfo
 
-	rName := acctest.RandString(5)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckAWSCodeDeployDeploymentGroupDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_createMultiple(rName),
+				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_createMultiple,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeDeployDeploymentGroupExists("aws_codedeploy_deployment_group.foo_group", &group),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app"),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group"),
 					testAccCheckTriggerEvents(&group, "foo-trigger", []string{
 						"DeploymentFailure",
 					}),
@@ -173,17 +131,17 @@ func TestAccAWSCodeDeployDeploymentGroup_triggerConfiguration_multiple(t *testin
 						"InstanceFailure",
 					}),
 					testAccCheckTriggerTargetArn(&group, "bar-trigger",
-						regexp.MustCompile("^arn:aws:sns:[^:]+:[0-9]{12}:bar-topic-"+rName+"$")),
+						regexp.MustCompile("^arn:aws:sns:[^:]+:[0-9]{12}:bar-topic$")),
 				),
 			},
 			resource.TestStep{
-				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_updateMultiple(rName),
+				Config: testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_updateMultiple,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeDeployDeploymentGroupExists("aws_codedeploy_deployment_group.foo_group", &group),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "app_name", "foo-app"),
 					resource.TestCheckResourceAttr(
-						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group-"+rName),
+						"aws_codedeploy_deployment_group.foo_group", "deployment_group_name", "foo-group"),
 					testAccCheckTriggerEvents(&group, "foo-trigger", []string{
 						"DeploymentFailure",
 						"DeploymentStart",
@@ -194,7 +152,7 @@ func TestAccAWSCodeDeployDeploymentGroup_triggerConfiguration_multiple(t *testin
 						"InstanceFailure",
 					}),
 					testAccCheckTriggerTargetArn(&group, "bar-trigger",
-						regexp.MustCompile("^arn:aws:sns:[^:]+:[0-9]{12}:baz-topic-"+rName+"$")),
+						regexp.MustCompile("^arn:aws:sns:[^:]+:[0-9]{12}:baz-topic$")),
 				),
 			},
 		},
@@ -431,14 +389,13 @@ func testAccCheckAWSCodeDeployDeploymentGroupExists(name string, group *codedepl
 	}
 }
 
-func testAccAWSCodeDeployDeploymentGroup(rName string) string {
-	return fmt.Sprintf(`
+var testAccAWSCodeDeployDeploymentGroup = `
 resource "aws_codedeploy_app" "foo_app" {
-	name = "foo_app_%s"
+	name = "foo_app"
 }
 
 resource "aws_iam_role_policy" "foo_policy" {
-	name = "foo_policy_%s"
+	name = "foo_policy"
 	role = "${aws_iam_role.foo_role.id}"
 	policy = <<EOF
 {
@@ -466,7 +423,7 @@ EOF
 }
 
 resource "aws_iam_role" "foo_role" {
-	name = "foo_role_%s"
+	name = "foo_role"
 	assume_role_policy = <<EOF
 {
 	"Version": "2012-10-17",
@@ -488,24 +445,22 @@ EOF
 
 resource "aws_codedeploy_deployment_group" "foo" {
 	app_name = "${aws_codedeploy_app.foo_app.name}"
-	deployment_group_name = "foo_%s"
+	deployment_group_name = "foo"
 	service_role_arn = "${aws_iam_role.foo_role.arn}"
 	ec2_tag_filter {
 		key = "filterkey"
 		type = "KEY_AND_VALUE"
 		value = "filtervalue"
 	}
-}`, rName, rName, rName, rName)
-}
+}`
 
-func testAccAWSCodeDeployDeploymentGroupModified(rName string) string {
-	return fmt.Sprintf(`
+var testAccAWSCodeDeployDeploymentGroupModified = `
 resource "aws_codedeploy_app" "foo_app" {
-	name = "foo_app_%s"
+	name = "foo_app"
 }
 
 resource "aws_iam_role_policy" "foo_policy" {
-	name = "foo_policy_%s"
+	name = "foo_policy"
 	role = "${aws_iam_role.foo_role.id}"
 	policy = <<EOF
 {
@@ -533,7 +488,7 @@ EOF
 }
 
 resource "aws_iam_role" "foo_role" {
-	name = "foo_role_%s"
+	name = "foo_role"
 	assume_role_policy = <<EOF
 {
 	"Version": "2012-10-17",
@@ -555,24 +510,22 @@ EOF
 
 resource "aws_codedeploy_deployment_group" "foo" {
 	app_name = "${aws_codedeploy_app.foo_app.name}"
-	deployment_group_name = "bar_%s"
+	deployment_group_name = "bar"
 	service_role_arn = "${aws_iam_role.foo_role.arn}"
 	ec2_tag_filter {
 		key = "filterkey"
 		type = "KEY_AND_VALUE"
 		value = "anotherfiltervalue"
 	}
-}`, rName, rName, rName, rName)
-}
+}`
 
-func testAccAWSCodeDeployDeploymentGroupOnPremiseTags(rName string) string {
-	return fmt.Sprintf(`
+const baseCodeDeployConfig = `
 resource "aws_codedeploy_app" "foo_app" {
-	name = "foo_app_%s"
+	name = "foo-app"
 }
 
 resource "aws_iam_role_policy" "foo_policy" {
-	name = "foo_policy_%s"
+	name = "foo-policy"
 	role = "${aws_iam_role.foo_role.id}"
 	policy = <<EOF
 {
@@ -587,74 +540,6 @@ resource "aws_iam_role_policy" "foo_policy" {
 				"autoscaling:DescribeLifecycleHooks",
 				"autoscaling:PutLifecycleHook",
 				"autoscaling:RecordLifecycleActionHeartbeat",
-				"ec2:DescribeInstances",
-				"ec2:DescribeInstanceStatus",
-				"tag:GetTags",
-				"tag:GetResources"
-			],
-			"Resource": "*"
-		}
-	]
-}
-EOF
-}
-
-resource "aws_iam_role" "foo_role" {
-	name = "foo_role_%s"
-	assume_role_policy = <<EOF
-{
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Sid": "",
-			"Effect": "Allow",
-			"Principal": {
-				"Service": [
-					"codedeploy.amazonaws.com"
-				]
-			},
-			"Action": "sts:AssumeRole"
-		}
-	]
-}
-EOF
-}
-
-resource "aws_codedeploy_deployment_group" "foo" {
-	app_name = "${aws_codedeploy_app.foo_app.name}"
-	deployment_group_name = "foo_%s"
-	service_role_arn = "${aws_iam_role.foo_role.arn}"
-	on_premises_instance_tag_filter {
-		key = "filterkey"
-		type = "KEY_AND_VALUE"
-		value = "filtervalue"
-	}
-}`, rName, rName, rName, rName)
-}
-
-func baseCodeDeployConfig(rName string) string {
-	return fmt.Sprintf(`
-resource "aws_codedeploy_app" "foo_app" {
-	name = "foo-app-%s"
-}
-
-resource "aws_iam_role_policy" "foo_policy" {
-	name = "foo-policy-%s"
-	role = "${aws_iam_role.foo_role.id}"
-	policy = <<EOF
-{
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Effect": "Allow",
-			"Action": [
-				"autoscaling:CompleteLifecycleAction",
-				"autoscaling:DeleteLifecycleHook",
-				"autoscaling:DescribeAutoScalingGroups",
-				"autoscaling:DescribeLifecycleHooks",
-				"autoscaling:PutLifecycleHook",
-				"autoscaling:RecordLifecycleActionHeartbeat",
-				"codedeploy:*",
 				"ec2:DescribeInstances",
 				"ec2:DescribeInstanceStatus",
 				"tag:GetTags",
@@ -669,7 +554,7 @@ EOF
 }
 
 resource "aws_iam_role" "foo_role" {
-	name = "foo-role-%s"
+	name = "foo-role"
 	assume_role_policy = <<EOF
 {
 	"Version": "2012-10-17",
@@ -688,18 +573,15 @@ EOF
 }
 
 resource "aws_sns_topic" "foo_topic" {
-	name = "foo-topic-%s"
-}`, rName, rName, rName, rName)
+	name = "foo-topic"
 }
 
-func testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_create(rName string) string {
-	return fmt.Sprintf(`
+`
 
-	%s
-	
+const testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_create = baseCodeDeployConfig + `
 resource "aws_codedeploy_deployment_group" "foo_group" {
 	app_name = "${aws_codedeploy_app.foo_app.name}"
-	deployment_group_name = "foo-group-%s"
+	deployment_group_name = "foo-group"
 	service_role_arn = "${aws_iam_role.foo_role.arn}"
 
 	trigger_configuration {
@@ -707,17 +589,12 @@ resource "aws_codedeploy_deployment_group" "foo_group" {
 		trigger_name = "foo-trigger"
 		trigger_target_arn = "${aws_sns_topic.foo_topic.arn}"
 	}
-}`, baseCodeDeployConfig(rName), rName)
-}
+}`
 
-func testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_update(rName string) string {
-	return fmt.Sprintf(`
-
-	%s
-	
+const testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_update = baseCodeDeployConfig + `
 resource "aws_codedeploy_deployment_group" "foo_group" {
 	app_name = "${aws_codedeploy_app.foo_app.name}"
-	deployment_group_name = "foo-group-%s"
+	deployment_group_name = "foo-group"
 	service_role_arn = "${aws_iam_role.foo_role.arn}"
 
 	trigger_configuration {
@@ -725,21 +602,16 @@ resource "aws_codedeploy_deployment_group" "foo_group" {
 		trigger_name = "foo-trigger"
 		trigger_target_arn = "${aws_sns_topic.foo_topic.arn}"
 	}
-}`, baseCodeDeployConfig(rName), rName)
-}
+}`
 
-func testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_createMultiple(rName string) string {
-	return fmt.Sprintf(`
-
-	%s
-	
+const testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_createMultiple = baseCodeDeployConfig + `
 resource "aws_sns_topic" "bar_topic" {
-	name = "bar-topic-%s"
+	name = "bar-topic"
 }
 
 resource "aws_codedeploy_deployment_group" "foo_group" {
 	app_name = "${aws_codedeploy_app.foo_app.name}"
-	deployment_group_name = "foo-group-%s"
+	deployment_group_name = "foo-group"
 	service_role_arn = "${aws_iam_role.foo_role.arn}"
 
 	trigger_configuration {
@@ -753,25 +625,20 @@ resource "aws_codedeploy_deployment_group" "foo_group" {
 		trigger_name = "bar-trigger"
 		trigger_target_arn = "${aws_sns_topic.bar_topic.arn}"
 	}
-}`, baseCodeDeployConfig(rName), rName, rName)
-}
+}`
 
-func testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_updateMultiple(rName string) string {
-	return fmt.Sprintf(`
-
-	%s
-	
+const testAccAWSCodeDeployDeploymentGroup_triggerConfiguration_updateMultiple = baseCodeDeployConfig + `
 resource "aws_sns_topic" "bar_topic" {
-	name = "bar-topic-%s"
+	name = "bar-topic"
 }
 
 resource "aws_sns_topic" "baz_topic" {
-	name = "baz-topic-%s"
+	name = "baz-topic"
 }
 
 resource "aws_codedeploy_deployment_group" "foo_group" {
 	app_name = "${aws_codedeploy_app.foo_app.name}"
-	deployment_group_name = "foo-group-%s"
+	deployment_group_name = "foo-group"
 	service_role_arn = "${aws_iam_role.foo_role.arn}"
 
 	trigger_configuration {
@@ -785,5 +652,4 @@ resource "aws_codedeploy_deployment_group" "foo_group" {
 		trigger_name = "bar-trigger"
 		trigger_target_arn = "${aws_sns_topic.baz_topic.arn}"
 	}
-}`, baseCodeDeployConfig(rName), rName, rName, rName)
-}
+}`

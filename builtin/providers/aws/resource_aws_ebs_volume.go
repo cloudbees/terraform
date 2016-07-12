@@ -19,9 +19,6 @@ func resourceAwsEbsVolume() *schema.Resource {
 		Read:   resourceAwsEbsVolumeRead,
 		Update: resourceAWSEbsVolumeUpdate,
 		Delete: resourceAwsEbsVolumeDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"availability_zone": &schema.Schema{

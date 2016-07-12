@@ -16,12 +16,12 @@ func resourceArmStorageBlob() *schema.Resource {
 		Delete: resourceArmStorageBlobDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -31,25 +31,25 @@ func resourceArmStorageBlob() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"storage_container_name": {
+			"storage_container_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"type": {
+			"type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validateArmStorageBlobType,
 			},
-			"size": {
+			"size": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ForceNew:     true,
 				Default:      0,
 				ValidateFunc: validateArmStorageBlobSize,
 			},
-			"url": {
+			"url": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -86,12 +86,9 @@ func resourceArmStorageBlobCreate(d *schema.ResourceData, meta interface{}) erro
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		return fmt.Errorf("Storage Account %q Not Found", storageAccountName)
 	}
 
 	name := d.Get("name").(string)
@@ -120,14 +117,9 @@ func resourceArmStorageBlobRead(d *schema.ResourceData, meta interface{}) error 
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		log.Printf("[DEBUG] Storage account %q not found, removing blob %q from state", storageAccountName, d.Id())
-		d.SetId("")
-		return nil
 	}
 
 	exists, err := resourceArmStorageBlobExists(d, meta)
@@ -158,14 +150,9 @@ func resourceArmStorageBlobExists(d *schema.ResourceData, meta interface{}) (boo
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return false, err
-	}
-	if !accountExists {
-		log.Printf("[DEBUG] Storage account %q not found, removing blob %q from state", storageAccountName, d.Id())
-		d.SetId("")
-		return false, nil
 	}
 
 	name := d.Get("name").(string)
@@ -191,20 +178,16 @@ func resourceArmStorageBlobDelete(d *schema.ResourceData, meta interface{}) erro
 	resourceGroupName := d.Get("resource_group_name").(string)
 	storageAccountName := d.Get("storage_account_name").(string)
 
-	blobClient, accountExists, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
+	blobClient, err := armClient.getBlobStorageClientForStorageAccount(resourceGroupName, storageAccountName)
 	if err != nil {
 		return err
-	}
-	if !accountExists {
-		log.Printf("[INFO]Storage Account %q doesn't exist so the blob won't exist", storageAccountName)
-		return nil
 	}
 
 	name := d.Get("name").(string)
 	storageContainerName := d.Get("storage_container_name").(string)
 
 	log.Printf("[INFO] Deleting storage blob %q", name)
-	if _, err = blobClient.DeleteBlobIfExists(storageContainerName, name, map[string]string{}); err != nil {
+	if _, err = blobClient.DeleteBlobIfExists(storageContainerName, name); err != nil {
 		return fmt.Errorf("Error deleting storage blob %q: %s", name, err)
 	}
 

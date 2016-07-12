@@ -2,9 +2,12 @@ package azurerm
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/arm/network"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -16,36 +19,36 @@ func resourceArmRoute() *schema.Resource {
 		Delete: resourceArmRouteDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"route_table_name": {
+			"route_table_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"address_prefix": {
+			"address_prefix": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"next_hop_type": {
+			"next_hop_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validateRouteTableNextHopType,
 			},
 
-			"next_hop_in_ip_address": {
+			"next_hop_in_ip_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -83,19 +86,22 @@ func resourceArmRouteCreate(d *schema.ResourceData, meta interface{}) error {
 		Properties: &properties,
 	}
 
-	_, err := routesClient.CreateOrUpdate(resGroup, rtName, name, route, make(chan struct{}))
+	resp, err := routesClient.CreateOrUpdate(resGroup, rtName, name, route)
 	if err != nil {
 		return err
 	}
+	d.SetId(*resp.ID)
 
-	read, err := routesClient.Get(resGroup, rtName, name)
-	if err != nil {
-		return err
+	log.Printf("[DEBUG] Waiting for Route (%s) to become available", name)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"Accepted", "Updating"},
+		Target:  []string{"Succeeded"},
+		Refresh: routeStateRefreshFunc(client, resGroup, rtName, name),
+		Timeout: 10 * time.Minute,
 	}
-	if read.ID == nil {
-		return fmt.Errorf("Cannot read Route %s/%s (resource group %s) ID", rtName, name, resGroup)
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting for Route (%s) to become available: %s", name, err)
 	}
-	d.SetId(*read.ID)
 
 	return resourceArmRouteRead(d, meta)
 }
@@ -138,7 +144,18 @@ func resourceArmRouteDelete(d *schema.ResourceData, meta interface{}) error {
 	armMutexKV.Lock(rtName)
 	defer armMutexKV.Unlock(rtName)
 
-	_, err = routesClient.Delete(resGroup, rtName, routeName, make(chan struct{}))
+	_, err = routesClient.Delete(resGroup, rtName, routeName)
 
 	return err
+}
+
+func routeStateRefreshFunc(client *ArmClient, resourceGroupName string, routeTableName string, routeName string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		res, err := client.routesClient.Get(resourceGroupName, routeTableName, routeName)
+		if err != nil {
+			return nil, "", fmt.Errorf("Error issuing read request in routeStateRefreshFunc to Azure ARM for route '%s' (RG: '%s') (NSG: '%s'): %s", routeName, resourceGroupName, routeTableName, err)
+		}
+
+		return res, *res.Properties.ProvisioningState, nil
+	}
 }

@@ -25,6 +25,3 @@ As a next step, the following resources are available:
   featured configuration files, showing some of the possibilities
   with Terraform.
 
-* [Import](/docs/import/index.html) - The import section of the documentation
-  covers importing existing infrastructure into Terraform.
-

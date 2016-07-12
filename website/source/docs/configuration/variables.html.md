@@ -153,13 +153,7 @@ $ TF_VAR_image=foo terraform apply
 ## Variable Files
 
 Variables can be collected in files and passed all at once using the 
-`-var-file=foo.tfvars` flag. The format for variables in `.tfvars`
-files is:
-
-```
-foo = "bar"
-xyz = "abc"
-```
+`-var-file=foo` flag. 
 
 The flag can be used multiple times per command invocation:
 
@@ -171,18 +165,22 @@ terraform apply -var-file=foo.tfvars -var-file=bar.tfvars
 variable file (reading left to right) will be the definition used. Put more 
 simply, the last time a variable is defined is the one which will be used.
 
-### Precedence example:
+##Example: 
 
 Both these files have the variable `baz` defined:
 
 _foo.tfvars_
 ```
-baz = "foo"
+variable "baz" { 
+    default = "foo"
+}
 ```
 
 _bar.tfvars_
 ```
-baz = "bar"
+variable "baz" { 
+    default = "bar"
+}
 ```
 
 When they are passed in the following order:

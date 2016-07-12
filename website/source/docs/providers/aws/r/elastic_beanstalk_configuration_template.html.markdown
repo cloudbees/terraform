@@ -43,6 +43,7 @@ The following arguments are supported:
 off of. Example stacks can be found in the [Amazon API documentation][1]
 
 
+<a id="option-settings"></a>
 ## Option Settings
 
 The `setting` field supports the following format:

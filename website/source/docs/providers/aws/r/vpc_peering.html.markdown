@@ -15,10 +15,8 @@ Provides an VPC Peering Connection resource.
 Basic usage:
 
 ```
-resource "aws_vpc_peering_connection" "foo" {
-    peer_owner_id = "${var.peer_owner_id}"
-    peer_vpc_id = "${aws_vpc.bar.id}"
-    vpc_id = "${aws_vpc.foo.id}"
+resource "aws_vpc" "main" {
+    cidr_block = "10.0.0.0/16"
 }
 ```
 
@@ -30,11 +28,6 @@ resource "aws_vpc_peering_connection" "foo" {
     peer_owner_id = "${var.peer_owner_id}"
     peer_vpc_id = "${aws_vpc.bar.id}"
     vpc_id = "${aws_vpc.foo.id}"
-    
-    auto_accept = true
-    tags { 
-      Name = "VPC Peering between foo and bar" 
-    }
 }
 
 resource "aws_vpc" "foo" {
@@ -65,4 +58,4 @@ The following attributes are exported:
 
 
 ## Notes
-If you are not the owner of both VPCs, or do not enable auto_accept you will still have to accept the peering with the AWS Console, aws-cli or aws-sdk-go.
+You still have to accept the peering with the AWS Console, aws-cli or aws-sdk-go.

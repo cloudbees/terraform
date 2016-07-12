@@ -37,9 +37,7 @@ func NewFolder(c *vim25.Client, ref types.ManagedObjectReference) *Folder {
 }
 
 func NewRootFolder(c *vim25.Client) *Folder {
-	f := NewFolder(c, c.ServiceContent.RootFolder)
-	f.InventoryPath = "/"
-	return f
+	return NewFolder(c, c.ServiceContent.RootFolder)
 }
 
 func (f Folder) Children(ctx context.Context) ([]Reference, error) {
@@ -192,20 +190,6 @@ func (f Folder) CreateDVS(ctx context.Context, spec types.DVSCreateSpec) (*Task,
 	}
 
 	res, err := methods.CreateDVS_Task(ctx, f.c, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewTask(f.c, res.Returnval), nil
-}
-
-func (f Folder) MoveInto(ctx context.Context, list []types.ManagedObjectReference) (*Task, error) {
-	req := types.MoveIntoFolder_Task{
-		This: f.Reference(),
-		List: list,
-	}
-
-	res, err := methods.MoveIntoFolder_Task(ctx, f.c, &req)
 	if err != nil {
 		return nil, err
 	}

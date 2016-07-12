@@ -4,7 +4,6 @@
 package ecs
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awsutil"
@@ -1035,19 +1034,6 @@ func (s Attribute) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *Attribute) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "Attribute"}
-	if s.Name == nil {
-		invalidParams.Add(request.NewErrParamRequired("Name"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // A regional grouping of one or more container instances on which you can run
 // task requests. Each account receives a default cluster the first time you
 // use the Amazon ECS service, but you may also create other clusters. Clusters
@@ -1406,41 +1392,6 @@ func (s ContainerDefinition) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ContainerDefinition) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ContainerDefinition"}
-	if s.ExtraHosts != nil {
-		for i, v := range s.ExtraHosts {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ExtraHosts", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-	if s.LogConfiguration != nil {
-		if err := s.LogConfiguration.Validate(); err != nil {
-			invalidParams.AddNested("LogConfiguration", err.(request.ErrInvalidParams))
-		}
-	}
-	if s.Ulimits != nil {
-		for i, v := range s.Ulimits {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Ulimits", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // An EC2 instance that is running the Amazon ECS agent and has been registered
 // with a cluster.
 type ContainerInstance struct {
@@ -1618,25 +1569,6 @@ func (s CreateServiceInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateServiceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateServiceInput"}
-	if s.DesiredCount == nil {
-		invalidParams.Add(request.NewErrParamRequired("DesiredCount"))
-	}
-	if s.ServiceName == nil {
-		invalidParams.Add(request.NewErrParamRequired("ServiceName"))
-	}
-	if s.TaskDefinition == nil {
-		invalidParams.Add(request.NewErrParamRequired("TaskDefinition"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type CreateServiceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1669,19 +1601,6 @@ func (s DeleteClusterInput) String() string {
 // GoString returns the string representation
 func (s DeleteClusterInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteClusterInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteClusterInput"}
-	if s.Cluster == nil {
-		invalidParams.Add(request.NewErrParamRequired("Cluster"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeleteClusterOutput struct {
@@ -1720,19 +1639,6 @@ func (s DeleteServiceInput) String() string {
 // GoString returns the string representation
 func (s DeleteServiceInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteServiceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteServiceInput"}
-	if s.Service == nil {
-		invalidParams.Add(request.NewErrParamRequired("Service"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeleteServiceOutput struct {
@@ -1860,19 +1766,6 @@ func (s DeregisterContainerInstanceInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeregisterContainerInstanceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeregisterContainerInstanceInput"}
-	if s.ContainerInstance == nil {
-		invalidParams.Add(request.NewErrParamRequired("ContainerInstance"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeregisterContainerInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1907,19 +1800,6 @@ func (s DeregisterTaskDefinitionInput) String() string {
 // GoString returns the string representation
 func (s DeregisterTaskDefinitionInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeregisterTaskDefinitionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeregisterTaskDefinitionInput"}
-	if s.TaskDefinition == nil {
-		invalidParams.Add(request.NewErrParamRequired("TaskDefinition"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeregisterTaskDefinitionOutput struct {
@@ -2000,19 +1880,6 @@ func (s DescribeContainerInstancesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeContainerInstancesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeContainerInstancesInput"}
-	if s.ContainerInstances == nil {
-		invalidParams.Add(request.NewErrParamRequired("ContainerInstances"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DescribeContainerInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2054,19 +1921,6 @@ func (s DescribeServicesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeServicesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeServicesInput"}
-	if s.Services == nil {
-		invalidParams.Add(request.NewErrParamRequired("Services"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DescribeServicesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2106,19 +1960,6 @@ func (s DescribeTaskDefinitionInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeTaskDefinitionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeTaskDefinitionInput"}
-	if s.TaskDefinition == nil {
-		invalidParams.Add(request.NewErrParamRequired("TaskDefinition"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DescribeTaskDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2156,19 +1997,6 @@ func (s DescribeTasksInput) String() string {
 // GoString returns the string representation
 func (s DescribeTasksInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DescribeTasksInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DescribeTasksInput"}
-	if s.Tasks == nil {
-		invalidParams.Add(request.NewErrParamRequired("Tasks"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DescribeTasksOutput struct {
@@ -2276,22 +2104,6 @@ func (s HostEntry) String() string {
 // GoString returns the string representation
 func (s HostEntry) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *HostEntry) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "HostEntry"}
-	if s.Hostname == nil {
-		invalidParams.Add(request.NewErrParamRequired("Hostname"))
-	}
-	if s.IpAddress == nil {
-		invalidParams.Add(request.NewErrParamRequired("IpAddress"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Details on a container instance host volume.
@@ -2783,19 +2595,6 @@ func (s LogConfiguration) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *LogConfiguration) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "LogConfiguration"}
-	if s.LogDriver == nil {
-		invalidParams.Add(request.NewErrParamRequired("LogDriver"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Details on a volume mount point that is used in a container definition.
 type MountPoint struct {
 	_ struct{} `type:"structure"`
@@ -2946,26 +2745,6 @@ func (s RegisterContainerInstanceInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RegisterContainerInstanceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RegisterContainerInstanceInput"}
-	if s.Attributes != nil {
-		for i, v := range s.Attributes {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Attributes", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type RegisterContainerInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3010,32 +2789,6 @@ func (s RegisterTaskDefinitionInput) String() string {
 // GoString returns the string representation
 func (s RegisterTaskDefinitionInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RegisterTaskDefinitionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RegisterTaskDefinitionInput"}
-	if s.ContainerDefinitions == nil {
-		invalidParams.Add(request.NewErrParamRequired("ContainerDefinitions"))
-	}
-	if s.Family == nil {
-		invalidParams.Add(request.NewErrParamRequired("Family"))
-	}
-	if s.ContainerDefinitions != nil {
-		for i, v := range s.ContainerDefinitions {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "ContainerDefinitions", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RegisterTaskDefinitionOutput struct {
@@ -3140,19 +2893,6 @@ func (s RunTaskInput) String() string {
 // GoString returns the string representation
 func (s RunTaskInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RunTaskInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RunTaskInput"}
-	if s.TaskDefinition == nil {
-		invalidParams.Add(request.NewErrParamRequired("TaskDefinition"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RunTaskOutput struct {
@@ -3322,22 +3062,6 @@ func (s StartTaskInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *StartTaskInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "StartTaskInput"}
-	if s.ContainerInstances == nil {
-		invalidParams.Add(request.NewErrParamRequired("ContainerInstances"))
-	}
-	if s.TaskDefinition == nil {
-		invalidParams.Add(request.NewErrParamRequired("TaskDefinition"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type StartTaskOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3385,19 +3109,6 @@ func (s StopTaskInput) String() string {
 // GoString returns the string representation
 func (s StopTaskInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *StopTaskInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "StopTaskInput"}
-	if s.Task == nil {
-		invalidParams.Add(request.NewErrParamRequired("Task"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type StopTaskOutput struct {
@@ -3663,25 +3374,6 @@ func (s Ulimit) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *Ulimit) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "Ulimit"}
-	if s.HardLimit == nil {
-		invalidParams.Add(request.NewErrParamRequired("HardLimit"))
-	}
-	if s.Name == nil {
-		invalidParams.Add(request.NewErrParamRequired("Name"))
-	}
-	if s.SoftLimit == nil {
-		invalidParams.Add(request.NewErrParamRequired("SoftLimit"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type UpdateContainerAgentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3704,19 +3396,6 @@ func (s UpdateContainerAgentInput) String() string {
 // GoString returns the string representation
 func (s UpdateContainerAgentInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *UpdateContainerAgentInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "UpdateContainerAgentInput"}
-	if s.ContainerInstance == nil {
-		invalidParams.Add(request.NewErrParamRequired("ContainerInstance"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type UpdateContainerAgentOutput struct {
@@ -3772,19 +3451,6 @@ func (s UpdateServiceInput) String() string {
 // GoString returns the string representation
 func (s UpdateServiceInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *UpdateServiceInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "UpdateServiceInput"}
-	if s.Service == nil {
-		invalidParams.Add(request.NewErrParamRequired("Service"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type UpdateServiceOutput struct {

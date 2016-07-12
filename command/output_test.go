@@ -16,11 +16,8 @@ func TestOutput(t *testing.T) {
 		Modules: []*terraform.ModuleState{
 			&terraform.ModuleState{
 				Path: []string{"root"},
-				Outputs: map[string]*terraform.OutputState{
-					"foo": &terraform.OutputState{
-						Value: "bar",
-						Type:  "string",
-					},
+				Outputs: map[string]string{
+					"foo": "bar",
 				},
 			},
 		},
@@ -55,20 +52,14 @@ func TestModuleOutput(t *testing.T) {
 		Modules: []*terraform.ModuleState{
 			&terraform.ModuleState{
 				Path: []string{"root"},
-				Outputs: map[string]*terraform.OutputState{
-					"foo": &terraform.OutputState{
-						Value: "bar",
-						Type:  "string",
-					},
+				Outputs: map[string]string{
+					"foo": "bar",
 				},
 			},
 			&terraform.ModuleState{
 				Path: []string{"root", "my_module"},
-				Outputs: map[string]*terraform.OutputState{
-					"blah": &terraform.OutputState{
-						Value: "tastatur",
-						Type:  "string",
-					},
+				Outputs: map[string]string{
+					"blah": "tastatur",
 				},
 			},
 		},
@@ -105,11 +96,8 @@ func TestMissingModuleOutput(t *testing.T) {
 		Modules: []*terraform.ModuleState{
 			&terraform.ModuleState{
 				Path: []string{"root"},
-				Outputs: map[string]*terraform.OutputState{
-					"foo": &terraform.OutputState{
-						Value: "bar",
-						Type:  "string",
-					},
+				Outputs: map[string]string{
+					"foo": "bar",
 				},
 			},
 		},
@@ -141,11 +129,8 @@ func TestOutput_badVar(t *testing.T) {
 		Modules: []*terraform.ModuleState{
 			&terraform.ModuleState{
 				Path: []string{"root"},
-				Outputs: map[string]*terraform.OutputState{
-					"foo": &terraform.OutputState{
-						Value: "bar",
-						Type:  "string",
-					},
+				Outputs: map[string]string{
+					"foo": "bar",
 				},
 			},
 		},
@@ -175,15 +160,9 @@ func TestOutput_blank(t *testing.T) {
 		Modules: []*terraform.ModuleState{
 			&terraform.ModuleState{
 				Path: []string{"root"},
-				Outputs: map[string]*terraform.OutputState{
-					"foo": &terraform.OutputState{
-						Value: "bar",
-						Type:  "string",
-					},
-					"name": &terraform.OutputState{
-						Value: "john-doe",
-						Type:  "string",
-					},
+				Outputs: map[string]string{
+					"foo":  "bar",
+					"name": "john-doe",
 				},
 			},
 		},
@@ -274,7 +253,7 @@ func TestOutput_noVars(t *testing.T) {
 		Modules: []*terraform.ModuleState{
 			&terraform.ModuleState{
 				Path:    []string{"root"},
-				Outputs: map[string]*terraform.OutputState{},
+				Outputs: map[string]string{},
 			},
 		},
 	}
@@ -303,11 +282,8 @@ func TestOutput_stateDefault(t *testing.T) {
 		Modules: []*terraform.ModuleState{
 			&terraform.ModuleState{
 				Path: []string{"root"},
-				Outputs: map[string]*terraform.OutputState{
-					"foo": &terraform.OutputState{
-						Value: "bar",
-						Type:  "string",
-					},
+				Outputs: map[string]string{
+					"foo": "bar",
 				},
 			},
 		},

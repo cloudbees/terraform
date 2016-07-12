@@ -2,7 +2,6 @@ package terraform
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform/config"
@@ -20,9 +19,9 @@ type GraphNodeCountDependent interface {
 type GraphNodeConfigResource struct {
 	Resource *config.Resource
 
-	// If set to true, this resource represents a resource
-	// that will be destroyed in some way.
-	Destroy bool
+	// If this is set to anything other than destroyModeNone, then this
+	// resource represents a resource that will be destroyed in some way.
+	DestroyMode GraphNodeDestroyMode
 
 	// Used during DynamicExpand to target indexes
 	Targets []ResourceAddress
@@ -32,10 +31,10 @@ type GraphNodeConfigResource struct {
 
 func (n *GraphNodeConfigResource) Copy() *GraphNodeConfigResource {
 	ncr := &GraphNodeConfigResource{
-		Resource: n.Resource.Copy(),
-		Destroy:  n.Destroy,
-		Targets:  make([]ResourceAddress, 0, len(n.Targets)),
-		Path:     make([]string, 0, len(n.Path)),
+		Resource:    n.Resource.Copy(),
+		DestroyMode: n.DestroyMode,
+		Targets:     make([]ResourceAddress, 0, len(n.Targets)),
+		Path:        make([]string, 0, len(n.Path)),
 	}
 	for _, t := range n.Targets {
 		ncr.Targets = append(ncr.Targets, *t.Copy())
@@ -121,15 +120,22 @@ func (n *GraphNodeConfigResource) VarWalk(fn func(config.InterpolatedVariable)) 
 
 func (n *GraphNodeConfigResource) Name() string {
 	result := n.Resource.Id()
-	if n.Destroy {
+	switch n.DestroyMode {
+	case DestroyNone:
+	case DestroyPrimary:
 		result += " (destroy)"
+	case DestroyTainted:
+		result += " (destroy tainted)"
+	default:
+		result += " (unknown destroy type)"
 	}
+
 	return result
 }
 
 // GraphNodeDotter impl.
 func (n *GraphNodeConfigResource) DotNode(name string, opts *GraphDotOpts) *dot.Node {
-	if n.Destroy && !opts.Verbose {
+	if n.DestroyMode != DestroyNone && !opts.Verbose {
 		return nil
 	}
 	return dot.NewNode(name, map[string]string{
@@ -155,18 +161,23 @@ func (n *GraphNodeConfigResource) DynamicExpand(ctx EvalContext) (*Graph, error)
 	// Start creating the steps
 	steps := make([]GraphTransformer, 0, 5)
 
-	// Expand counts.
-	steps = append(steps, &ResourceCountTransformer{
-		Resource: n.Resource,
-		Destroy:  n.Destroy,
-		Targets:  n.Targets,
-	})
+	// Primary and non-destroy modes are responsible for creating/destroying
+	// all the nodes, expanding counts.
+	switch n.DestroyMode {
+	case DestroyNone, DestroyPrimary:
+		steps = append(steps, &ResourceCountTransformer{
+			Resource: n.Resource,
+			Destroy:  n.DestroyMode != DestroyNone,
+			Targets:  n.Targets,
+		})
+	}
 
 	// Additional destroy modifications.
-	if n.Destroy {
-		// If we're destroying a primary or tainted resource, we want to
+	switch n.DestroyMode {
+	case DestroyPrimary:
+		// If we're destroying the primary instance, then we want to
 		// expand orphans, which have all the same semantics in a destroy
-		// as a primary or tainted resource.
+		// as a primary.
 		steps = append(steps, &OrphanTransformer{
 			State: state,
 			View:  n.Resource.Id(),
@@ -176,12 +187,19 @@ func (n *GraphNodeConfigResource) DynamicExpand(ctx EvalContext) (*Graph, error)
 			State: state,
 			View:  n.Resource.Id(),
 		})
+	case DestroyTainted:
+		// If we're only destroying tainted resources, then we only
+		// want to find tainted resources and destroy them here.
+		steps = append(steps, &TaintedTransformer{
+			State: state,
+			View:  n.Resource.Id(),
+		})
 	}
 
 	// We always want to apply targeting
 	steps = append(steps, &TargetsTransformer{
 		ParsedTargets: n.Targets,
-		Destroy:       n.Destroy,
+		Destroy:       n.DestroyMode != DestroyNone,
 	})
 
 	// Always end with the root being added
@@ -200,7 +218,6 @@ func (n *GraphNodeConfigResource) ResourceAddress() *ResourceAddress {
 		InstanceType: TypePrimary,
 		Name:         n.Resource.Name,
 		Type:         n.Resource.Type,
-		Mode:         n.Resource.Mode,
 	}
 }
 
@@ -239,9 +256,9 @@ func (n *GraphNodeConfigResource) ProvisionedBy() []string {
 }
 
 // GraphNodeDestroyable
-func (n *GraphNodeConfigResource) DestroyNode() GraphNodeDestroy {
+func (n *GraphNodeConfigResource) DestroyNode(mode GraphNodeDestroyMode) GraphNodeDestroy {
 	// If we're already a destroy node, then don't do anything
-	if n.Destroy {
+	if n.DestroyMode != DestroyNone {
 		return nil
 	}
 
@@ -249,24 +266,20 @@ func (n *GraphNodeConfigResource) DestroyNode() GraphNodeDestroy {
 		GraphNodeConfigResource: *n.Copy(),
 		Original:                n,
 	}
-	result.Destroy = true
-
+	result.DestroyMode = mode
 	return result
 }
 
 // GraphNodeNoopPrunable
 func (n *GraphNodeConfigResource) Noop(opts *NoopOpts) bool {
-	log.Printf("[DEBUG] Checking resource noop: %s", n.Name())
 	// We don't have any noop optimizations for destroy nodes yet
-	if n.Destroy {
-		log.Printf("[DEBUG] Destroy node, not a noop")
+	if n.DestroyMode != DestroyNone {
 		return false
 	}
 
 	// If there is no diff, then we aren't a noop since something needs to
 	// be done (such as a plan). We only check if we're a noop in a diff.
 	if opts.Diff == nil || opts.Diff.Empty() {
-		log.Printf("[DEBUG] No diff, not a noop")
 		return false
 	}
 
@@ -274,7 +287,6 @@ func (n *GraphNodeConfigResource) Noop(opts *NoopOpts) bool {
 	// we need to be sure to evaluate the count so that splat variables work
 	// later (which need to know the full count).
 	if len(n.Resource.RawCount.Interpolations) > 0 {
-		log.Printf("[DEBUG] Count has interpolations, not a noop")
 		return false
 	}
 
@@ -282,7 +294,6 @@ func (n *GraphNodeConfigResource) Noop(opts *NoopOpts) bool {
 	// it means there is a diff, and that the module we're in just isn't
 	// in it, meaning we're not doing anything.
 	if opts.ModDiff == nil || opts.ModDiff.Empty() {
-		log.Printf("[DEBUG] No mod diff, treating resource as a noop")
 		return true
 	}
 
@@ -293,13 +304,11 @@ func (n *GraphNodeConfigResource) Noop(opts *NoopOpts) bool {
 	found := false
 	for k, _ := range opts.ModDiff.Resources {
 		if strings.HasPrefix(k, prefix) {
-			log.Printf("[DEBUG] Diff has %s, resource is not a noop", k)
 			found = true
 			break
 		}
 	}
 
-	log.Printf("[DEBUG] Final noop value: %t", !found)
 	return !found
 }
 
@@ -347,9 +356,9 @@ func (n *GraphNodeConfigResourceFlat) ProvisionedBy() []string {
 }
 
 // GraphNodeDestroyable impl.
-func (n *GraphNodeConfigResourceFlat) DestroyNode() GraphNodeDestroy {
+func (n *GraphNodeConfigResourceFlat) DestroyNode(mode GraphNodeDestroyMode) GraphNodeDestroy {
 	// Get our parent destroy node. If we don't have any, just return
-	raw := n.GraphNodeConfigResource.DestroyNode()
+	raw := n.GraphNodeConfigResource.DestroyNode(mode)
 	if raw == nil {
 		return nil
 	}
@@ -405,8 +414,13 @@ type graphNodeResourceDestroy struct {
 }
 
 func (n *graphNodeResourceDestroy) CreateBeforeDestroy() bool {
-	// CBD is enabled if the resource enables it
-	return n.Original.Resource.Lifecycle.CreateBeforeDestroy && n.Destroy
+	// CBD is enabled if the resource enables it in addition to us
+	// being responsible for destroying the primary state. The primary
+	// state destroy node is the only destroy node that needs to be
+	// "shuffled" according to the CBD rules, since tainted resources
+	// don't have the same inverse dependencies.
+	return n.Original.Resource.Lifecycle.CreateBeforeDestroy &&
+		n.DestroyMode == DestroyPrimary
 }
 
 func (n *graphNodeResourceDestroy) CreateNode() dag.Vertex {
@@ -414,14 +428,43 @@ func (n *graphNodeResourceDestroy) CreateNode() dag.Vertex {
 }
 
 func (n *graphNodeResourceDestroy) DestroyInclude(d *ModuleDiff, s *ModuleState) bool {
-	if n.Destroy {
-		return n.destroyInclude(d, s)
+	switch n.DestroyMode {
+	case DestroyPrimary:
+		return n.destroyIncludePrimary(d, s)
+	case DestroyTainted:
+		return n.destroyIncludeTainted(d, s)
+	default:
+		return true
 	}
-
-	return true
 }
 
-func (n *graphNodeResourceDestroy) destroyInclude(
+func (n *graphNodeResourceDestroy) destroyIncludeTainted(
+	d *ModuleDiff, s *ModuleState) bool {
+	// If there is no state, there can't by any tainted.
+	if s == nil {
+		return false
+	}
+
+	// Grab the ID which is the prefix (in the case count > 0 at some point)
+	prefix := n.Original.Resource.Id()
+
+	// Go through the resources and find any with our prefix. If there
+	// are any tainted, we need to keep it.
+	for k, v := range s.Resources {
+		if !strings.HasPrefix(k, prefix) {
+			continue
+		}
+
+		if len(v.Tainted) > 0 {
+			return true
+		}
+	}
+
+	// We didn't find any tainted nodes, return
+	return false
+}
+
+func (n *graphNodeResourceDestroy) destroyIncludePrimary(
 	d *ModuleDiff, s *ModuleState) bool {
 	// Get the count, and specifically the raw value of the count
 	// (with interpolations and all). If the count is NOT a static "1",
@@ -464,7 +507,7 @@ func (n *graphNodeResourceDestroy) destroyInclude(
 	// If the count is set to ANYTHING other than a static "1" (variable,
 	// computed attribute, static number greater than 1), then we keep the
 	// destroy, since it is required for dynamic graph expansion to find
-	// orphan count objects.
+	// orphan/tainted count objects.
 	//
 	// This isn't ideal logic, but its strictly better without introducing
 	// new impossibilities. It breaks the cycle in practical cases, and the
@@ -483,9 +526,9 @@ func (n *graphNodeResourceDestroy) destroyInclude(
 	// only for resources in the diff that match our resource or a count-index
 	// of our resource that are marked for destroy.
 	if d != nil {
-		for k, v := range d.Resources {
+		for k, d := range d.Resources {
 			match := k == prefix || strings.HasPrefix(k, prefix+".")
-			if match && v.Destroy {
+			if match && d.Destroy {
 				return true
 			}
 		}

@@ -6,9 +6,11 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/arm/network"
 	"github.com/hashicorp/terraform/helper/hashcode"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -20,48 +22,48 @@ func resourceArmRouteTable() *schema.Resource {
 		Delete: resourceArmRouteTableDelete,
 
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"location": {
+			"location": &schema.Schema{
 				Type:      schema.TypeString,
 				Required:  true,
 				ForceNew:  true,
 				StateFunc: azureRMNormalizeLocation,
 			},
 
-			"resource_group_name": {
+			"resource_group_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"route": {
+			"route": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": {
+						"name": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"address_prefix": {
+						"address_prefix": &schema.Schema{
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"next_hop_type": {
+						"next_hop_type": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validateRouteTableNextHopType,
 						},
 
-						"next_hop_in_ip_address": {
+						"next_hop_in_ip_address": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
@@ -71,7 +73,7 @@ func resourceArmRouteTable() *schema.Resource {
 				Set: resourceArmRouteTableRouteHash,
 			},
 
-			"subnets": {
+			"subnets": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				Computed: true,
@@ -113,20 +115,23 @@ func resourceArmRouteTableCreate(d *schema.ResourceData, meta interface{}) error
 
 	}
 
-	_, err := routeTablesClient.CreateOrUpdate(resGroup, name, routeSet, make(chan struct{}))
+	resp, err := routeTablesClient.CreateOrUpdate(resGroup, name, routeSet)
 	if err != nil {
 		return err
 	}
 
-	read, err := routeTablesClient.Get(resGroup, name, "")
-	if err != nil {
-		return err
-	}
-	if read.ID == nil {
-		return fmt.Errorf("Cannot read Route Table %s (resource group %s) ID", name, resGroup)
-	}
+	d.SetId(*resp.ID)
 
-	d.SetId(*read.ID)
+	log.Printf("[DEBUG] Waiting for Route Table (%s) to become available", name)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{"Accepted", "Updating"},
+		Target:  []string{"Succeeded"},
+		Refresh: routeTableStateRefreshFunc(client, resGroup, name),
+		Timeout: 10 * time.Minute,
+	}
+	if _, err := stateConf.WaitForState(); err != nil {
+		return fmt.Errorf("Error waiting forRoute Table (%s) to become available: %s", name, err)
+	}
 
 	return resourceArmRouteTableRead(d, meta)
 }
@@ -179,7 +184,7 @@ func resourceArmRouteTableDelete(d *schema.ResourceData, meta interface{}) error
 	resGroup := id.ResourceGroup
 	name := id.Path["routeTables"]
 
-	_, err = routeTablesClient.Delete(resGroup, name, make(chan struct{}))
+	_, err = routeTablesClient.Delete(resGroup, name)
 
 	return err
 }
@@ -213,6 +218,17 @@ func expandAzureRmRouteTableRoutes(d *schema.ResourceData) ([]network.Route, err
 	}
 
 	return routes, nil
+}
+
+func routeTableStateRefreshFunc(client *ArmClient, resourceGroupName string, routeTableName string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		res, err := client.routeTablesClient.Get(resourceGroupName, routeTableName, "")
+		if err != nil {
+			return nil, "", fmt.Errorf("Error issuing read request in routeTableStateRefreshFunc to Azure ARM for route table '%s' (RG: '%s'): %s", routeTableName, resourceGroupName, err)
+		}
+
+		return res, *res.Properties.ProvisioningState, nil
+	}
 }
 
 func resourceArmRouteTableRouteHash(v interface{}) int {

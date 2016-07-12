@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
-	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -15,17 +14,15 @@ import (
 func TestAccAWSASGNotification_basic(t *testing.T) {
 	var asgn autoscaling.DescribeNotificationConfigurationsOutput
 
-	rName := acctest.RandString(5)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckASGNDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccASGNotificationConfig_basic(rName),
+				Config: testAccASGNotificationConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckASGNotificationExists("aws_autoscaling_notification.example", []string{"foobar1-terraform-test-" + rName}, &asgn),
+					testAccCheckASGNotificationExists("aws_autoscaling_notification.example", []string{"foobar1-terraform-test"}, &asgn),
 					testAccCheckAWSASGNotificationAttributes("aws_autoscaling_notification.example", &asgn),
 				),
 			},
@@ -36,25 +33,23 @@ func TestAccAWSASGNotification_basic(t *testing.T) {
 func TestAccAWSASGNotification_update(t *testing.T) {
 	var asgn autoscaling.DescribeNotificationConfigurationsOutput
 
-	rName := acctest.RandString(5)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckASGNDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccASGNotificationConfig_basic(rName),
+				Config: testAccASGNotificationConfig_basic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckASGNotificationExists("aws_autoscaling_notification.example", []string{"foobar1-terraform-test-" + rName}, &asgn),
+					testAccCheckASGNotificationExists("aws_autoscaling_notification.example", []string{"foobar1-terraform-test"}, &asgn),
 					testAccCheckAWSASGNotificationAttributes("aws_autoscaling_notification.example", &asgn),
 				),
 			},
 
 			resource.TestStep{
-				Config: testAccASGNotificationConfig_update(rName),
+				Config: testAccASGNotificationConfig_update,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckASGNotificationExists("aws_autoscaling_notification.example", []string{"foobar1-terraform-test-" + rName, "barfoo-terraform-test-" + rName}, &asgn),
+					testAccCheckASGNotificationExists("aws_autoscaling_notification.example", []string{"foobar1-terraform-test", "barfoo-terraform-test"}, &asgn),
 					testAccCheckAWSASGNotificationAttributes("aws_autoscaling_notification.example", &asgn),
 				),
 			},
@@ -210,21 +205,20 @@ func testAccCheckAWSASGNotificationAttributes(n string, asgn *autoscaling.Descri
 	}
 }
 
-func testAccASGNotificationConfig_basic(rName string) string {
-	return fmt.Sprintf(`
+const testAccASGNotificationConfig_basic = `
 resource "aws_sns_topic" "topic_example" {
-  name = "user-updates-topic-%s"
+  name = "user-updates-topic"
 }
 
 resource "aws_launch_configuration" "foobar" {
-  name = "foobarautoscaling-terraform-test-%s"
+  name = "foobarautoscaling-terraform-test"
   image_id = "ami-21f78e11"
   instance_type = "t1.micro"
 }
 
 resource "aws_autoscaling_group" "bar" {
   availability_zones = ["us-west-2a"]
-  name = "foobar1-terraform-test-%s"
+  name = "foobar1-terraform-test"
   max_size = 1
   min_size = 1
   health_check_grace_period = 100
@@ -243,24 +237,22 @@ resource "aws_autoscaling_notification" "example" {
   ]
   topic_arn = "${aws_sns_topic.topic_example.arn}"
 }
-`, rName, rName, rName)
-}
+`
 
-func testAccASGNotificationConfig_update(rName string) string {
-	return fmt.Sprintf(`
+const testAccASGNotificationConfig_update = `
 resource "aws_sns_topic" "topic_example" {
-  name = "user-updates-topic-%s"
+  name = "user-updates-topic"
 }
 
 resource "aws_launch_configuration" "foobar" {
-  name = "foobarautoscaling-terraform-test-%s"
+  name = "foobarautoscaling-terraform-test"
   image_id = "ami-21f78e11"
   instance_type = "t1.micro"
 }
 
 resource "aws_autoscaling_group" "bar" {
   availability_zones = ["us-west-2a"]
-  name = "foobar1-terraform-test-%s"
+  name = "foobar1-terraform-test"
   max_size = 1
   min_size = 1
   health_check_grace_period = 100
@@ -273,7 +265,7 @@ resource "aws_autoscaling_group" "bar" {
 
 resource "aws_autoscaling_group" "foo" {
   availability_zones = ["us-west-2b"]
-  name = "barfoo-terraform-test-%s"
+  name = "barfoo-terraform-test"
   max_size = 1
   min_size = 1
   health_check_grace_period = 200
@@ -295,8 +287,7 @@ resource "aws_autoscaling_notification" "example" {
 		"autoscaling:EC2_INSTANCE_LAUNCH_ERROR"
 	]
 	topic_arn = "${aws_sns_topic.topic_example.arn}"
-}`, rName, rName, rName, rName)
-}
+}`
 
 const testAccASGNotificationConfig_pagination = `
 resource "aws_sns_topic" "user_updates" {

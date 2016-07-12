@@ -23,9 +23,6 @@ func resourceAwsSecurityGroup() *schema.Resource {
 		Read:   resourceAwsSecurityGroupRead,
 		Update: resourceAwsSecurityGroupUpdate,
 		Delete: resourceAwsSecurityGroupDelete,
-		Importer: &schema.ResourceImporter{
-			State: resourceAwsSecurityGroupImportState,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{

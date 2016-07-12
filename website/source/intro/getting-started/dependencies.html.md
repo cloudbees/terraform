@@ -59,35 +59,24 @@ will look something like the following:
 
 ```
 $ terraform plan
+...
 
 + aws_eip.ip
-    allocation_id:     "<computed>"
-    association_id:    "<computed>"
-    domain:            "<computed>"
-    instance:          "${aws_instance.example.id}"
-    network_interface: "<computed>"
-    private_ip:        "<computed>"
-    public_ip:         "<computed>"
+    instance:   "" => "${aws_instance.example.id}"
+    private_ip: "" => "<computed>"
+    public_ip:  "" => "<computed>"
 
 + aws_instance.example
-    ami:                      "ami-13be557e"
-    availability_zone:        "<computed>"
-    ebs_block_device.#:       "<computed>"
-    ephemeral_block_device.#: "<computed>"
-    instance_state:           "<computed>"
-    instance_type:            "t2.micro"
-    key_name:                 "<computed>"
-    placement_group:          "<computed>"
-    private_dns:              "<computed>"
-    private_ip:               "<computed>"
-    public_dns:               "<computed>"
-    public_ip:                "<computed>"
-    root_block_device.#:      "<computed>"
-    security_groups.#:        "<computed>"
-    source_dest_check:        "true"
-    subnet_id:                "<computed>"
-    tenancy:                  "<computed>"
-    vpc_security_group_ids.#: "<computed>"
+    ami:               "" => "ami-b8b061d0"
+    availability_zone: "" => "<computed>"
+    instance_type:     "" => "t1.micro"
+    key_name:          "" => "<computed>"
+    private_dns:       "" => "<computed>"
+    private_ip:        "" => "<computed>"
+    public_dns:        "" => "<computed>"
+    public_ip:         "" => "<computed>"
+    security_groups:   "" => "<computed>"
+    subnet_id:         "" => "<computed>"
 ```
 
 Terraform will create two resources: the instance and the elastic
@@ -100,22 +89,11 @@ Next, run `terraform apply`. The output will look similar to the
 following:
 
 ```
-$ terraform apply
 aws_instance.example: Creating...
-  ami:                      "" => "ami-13be557e"
-  instance_type:            "" => "t2.micro"
-  [..]
-aws_instance.example: Still creating... (10s elapsed)
-aws_instance.example: Creation complete
+  ami:           "" => "ami-b8b061d0"
+  instance_type: "" => "t1.micro"
 aws_eip.ip: Creating...
-  allocation_id:     "" => "<computed>"
-  association_id:    "" => "<computed>"
-  domain:            "" => "<computed>"
-  instance:          "" => "i-f3d77d69"
-  network_interface: "" => "<computed>"
-  private_ip:        "" => "<computed>"
-  public_ip:         "" => "<computed>"
-aws_eip.ip: Creation complete
+  instance: "" => "i-0e737b25"
 
 Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
@@ -166,8 +144,8 @@ created in parallel to everything else.
 
 ```
 resource "aws_instance" "another" {
-  ami           = "ami-13be557e"
-  instance_type = "t2.micro"
+	ami = "ami-b8b061d0"
+	instance_type = "t1.micro"
 }
 ```
 

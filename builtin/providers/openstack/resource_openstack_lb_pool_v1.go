@@ -51,12 +51,6 @@ func resourceLBPoolV1() *schema.Resource {
 				Required: true,
 				ForceNew: false,
 			},
-			"lb_provider": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
-			},
 			"tenant_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -122,7 +116,6 @@ func resourceLBPoolV1Create(d *schema.ResourceData, meta interface{}) error {
 		SubnetID: d.Get("subnet_id").(string),
 		LBMethod: d.Get("lb_method").(string),
 		TenantID: d.Get("tenant_id").(string),
-		Provider: d.Get("lb_provider").(string),
 	}
 
 	log.Printf("[DEBUG] Create Options: %#v", createOpts)
@@ -189,7 +182,6 @@ func resourceLBPoolV1Read(d *schema.ResourceData, meta interface{}) error {
 	d.Set("protocol", p.Protocol)
 	d.Set("subnet_id", p.SubnetID)
 	d.Set("lb_method", p.LBMethod)
-	d.Set("lb_provider", p.Provider)
 	d.Set("tenant_id", p.TenantID)
 	d.Set("monitor_ids", p.MonitorIDs)
 	d.Set("member_ids", p.MemberIDs)

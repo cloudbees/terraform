@@ -23,7 +23,7 @@ type BuiltinEvalContext struct {
 	// as the Interpolater itself, it is protected by InterpolaterVarLock
 	// which must be locked during any access to the map.
 	Interpolater        *Interpolater
-	InterpolaterVars    map[string]map[string]interface{}
+	InterpolaterVars    map[string]map[string]string
 	InterpolaterVarLock *sync.Mutex
 
 	Hooks               []Hook
@@ -291,7 +291,6 @@ func (ctx *BuiltinEvalContext) Interpolate(
 			Path:     ctx.Path(),
 			Resource: r,
 		}
-
 		vs, err := ctx.Interpolater.Values(scope, cfg.Variables)
 		if err != nil {
 			return nil, err
@@ -312,7 +311,7 @@ func (ctx *BuiltinEvalContext) Path() []string {
 	return ctx.PathValue
 }
 
-func (ctx *BuiltinEvalContext) SetVariables(n string, vs map[string]interface{}) {
+func (ctx *BuiltinEvalContext) SetVariables(n string, vs map[string]string) {
 	ctx.InterpolaterVarLock.Lock()
 	defer ctx.InterpolaterVarLock.Unlock()
 
@@ -323,7 +322,7 @@ func (ctx *BuiltinEvalContext) SetVariables(n string, vs map[string]interface{})
 
 	vars := ctx.InterpolaterVars[key]
 	if vars == nil {
-		vars = make(map[string]interface{})
+		vars = make(map[string]string)
 		ctx.InterpolaterVars[key] = vars
 	}
 

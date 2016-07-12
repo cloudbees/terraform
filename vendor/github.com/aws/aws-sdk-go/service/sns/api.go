@@ -4,8 +4,6 @@
 package sns
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/private/protocol"
@@ -895,28 +893,6 @@ func (s AddPermissionInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *AddPermissionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "AddPermissionInput"}
-	if s.AWSAccountId == nil {
-		invalidParams.Add(request.NewErrParamRequired("AWSAccountId"))
-	}
-	if s.ActionName == nil {
-		invalidParams.Add(request.NewErrParamRequired("ActionName"))
-	}
-	if s.Label == nil {
-		invalidParams.Add(request.NewErrParamRequired("Label"))
-	}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type AddPermissionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -956,22 +932,6 @@ func (s ConfirmSubscriptionInput) String() string {
 // GoString returns the string representation
 func (s ConfirmSubscriptionInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ConfirmSubscriptionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ConfirmSubscriptionInput"}
-	if s.Token == nil {
-		invalidParams.Add(request.NewErrParamRequired("Token"))
-	}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Response for ConfirmSubscriptions action.
@@ -1017,25 +977,6 @@ func (s CreatePlatformApplicationInput) String() string {
 // GoString returns the string representation
 func (s CreatePlatformApplicationInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreatePlatformApplicationInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreatePlatformApplicationInput"}
-	if s.Attributes == nil {
-		invalidParams.Add(request.NewErrParamRequired("Attributes"))
-	}
-	if s.Name == nil {
-		invalidParams.Add(request.NewErrParamRequired("Name"))
-	}
-	if s.Platform == nil {
-		invalidParams.Add(request.NewErrParamRequired("Platform"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Response from CreatePlatformApplication action.
@@ -1089,22 +1030,6 @@ func (s CreatePlatformEndpointInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreatePlatformEndpointInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreatePlatformEndpointInput"}
-	if s.PlatformApplicationArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
-	}
-	if s.Token == nil {
-		invalidParams.Add(request.NewErrParamRequired("Token"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Response from CreateEndpoint action.
 type CreatePlatformEndpointOutput struct {
 	_ struct{} `type:"structure"`
@@ -1145,19 +1070,6 @@ func (s CreateTopicInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CreateTopicInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CreateTopicInput"}
-	if s.Name == nil {
-		invalidParams.Add(request.NewErrParamRequired("Name"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Response from CreateTopic action.
 type CreateTopicOutput struct {
 	_ struct{} `type:"structure"`
@@ -1194,19 +1106,6 @@ func (s DeleteEndpointInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteEndpointInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteEndpointInput"}
-	if s.EndpointArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("EndpointArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeleteEndpointOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1239,19 +1138,6 @@ func (s DeletePlatformApplicationInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeletePlatformApplicationInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeletePlatformApplicationInput"}
-	if s.PlatformApplicationArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type DeletePlatformApplicationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1281,19 +1167,6 @@ func (s DeleteTopicInput) String() string {
 // GoString returns the string representation
 func (s DeleteTopicInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *DeleteTopicInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "DeleteTopicInput"}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type DeleteTopicOutput struct {
@@ -1349,19 +1222,6 @@ func (s GetEndpointAttributesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *GetEndpointAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "GetEndpointAttributesInput"}
-	if s.EndpointArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("EndpointArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Response from GetEndpointAttributes of the EndpointArn.
 type GetEndpointAttributesOutput struct {
 	_ struct{} `type:"structure"`
@@ -1408,19 +1268,6 @@ func (s GetPlatformApplicationAttributesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *GetPlatformApplicationAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "GetPlatformApplicationAttributesInput"}
-	if s.PlatformApplicationArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Response for GetPlatformApplicationAttributes action.
 type GetPlatformApplicationAttributesOutput struct {
 	_ struct{} `type:"structure"`
@@ -1463,19 +1310,6 @@ func (s GetSubscriptionAttributesInput) String() string {
 // GoString returns the string representation
 func (s GetSubscriptionAttributesInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *GetSubscriptionAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "GetSubscriptionAttributesInput"}
-	if s.SubscriptionArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Response for GetSubscriptionAttributes action.
@@ -1521,19 +1355,6 @@ func (s GetTopicAttributesInput) String() string {
 // GoString returns the string representation
 func (s GetTopicAttributesInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *GetTopicAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "GetTopicAttributesInput"}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Response for GetTopicAttributes action.
@@ -1586,19 +1407,6 @@ func (s ListEndpointsByPlatformApplicationInput) String() string {
 // GoString returns the string representation
 func (s ListEndpointsByPlatformApplicationInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ListEndpointsByPlatformApplicationInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ListEndpointsByPlatformApplicationInput"}
-	if s.PlatformApplicationArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Response for ListEndpointsByPlatformApplication action.
@@ -1683,19 +1491,6 @@ func (s ListSubscriptionsByTopicInput) String() string {
 // GoString returns the string representation
 func (s ListSubscriptionsByTopicInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *ListSubscriptionsByTopicInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "ListSubscriptionsByTopicInput"}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Response for ListSubscriptionsByTopic action.
@@ -1836,19 +1631,6 @@ func (s MessageAttributeValue) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *MessageAttributeValue) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "MessageAttributeValue"}
-	if s.DataType == nil {
-		invalidParams.Add(request.NewErrParamRequired("DataType"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Platform application object.
 type PlatformApplication struct {
 	_ struct{} `type:"structure"`
@@ -1947,29 +1729,6 @@ func (s PublishInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *PublishInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "PublishInput"}
-	if s.Message == nil {
-		invalidParams.Add(request.NewErrParamRequired("Message"))
-	}
-	if s.MessageAttributes != nil {
-		for i, v := range s.MessageAttributes {
-			if v == nil {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "MessageAttributes", i), err.(request.ErrInvalidParams))
-			}
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 // Response for Publish action.
 type PublishOutput struct {
 	_ struct{} `type:"structure"`
@@ -2009,22 +1768,6 @@ func (s RemovePermissionInput) String() string {
 // GoString returns the string representation
 func (s RemovePermissionInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *RemovePermissionInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "RemovePermissionInput"}
-	if s.Label == nil {
-		invalidParams.Add(request.NewErrParamRequired("Label"))
-	}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type RemovePermissionOutput struct {
@@ -2070,22 +1813,6 @@ func (s SetEndpointAttributesInput) String() string {
 // GoString returns the string representation
 func (s SetEndpointAttributesInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *SetEndpointAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "SetEndpointAttributesInput"}
-	if s.Attributes == nil {
-		invalidParams.Add(request.NewErrParamRequired("Attributes"))
-	}
-	if s.EndpointArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("EndpointArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type SetEndpointAttributesOutput struct {
@@ -2137,22 +1864,6 @@ func (s SetPlatformApplicationAttributesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *SetPlatformApplicationAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "SetPlatformApplicationAttributesInput"}
-	if s.Attributes == nil {
-		invalidParams.Add(request.NewErrParamRequired("Attributes"))
-	}
-	if s.PlatformApplicationArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("PlatformApplicationArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type SetPlatformApplicationAttributesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2194,22 +1905,6 @@ func (s SetSubscriptionAttributesInput) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *SetSubscriptionAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "SetSubscriptionAttributesInput"}
-	if s.AttributeName == nil {
-		invalidParams.Add(request.NewErrParamRequired("AttributeName"))
-	}
-	if s.SubscriptionArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
 type SetSubscriptionAttributesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2249,22 +1944,6 @@ func (s SetTopicAttributesInput) String() string {
 // GoString returns the string representation
 func (s SetTopicAttributesInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *SetTopicAttributesInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "SetTopicAttributesInput"}
-	if s.AttributeName == nil {
-		invalidParams.Add(request.NewErrParamRequired("AttributeName"))
-	}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type SetTopicAttributesOutput struct {
@@ -2318,22 +1997,6 @@ func (s SubscribeInput) String() string {
 // GoString returns the string representation
 func (s SubscribeInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *SubscribeInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "SubscribeInput"}
-	if s.Protocol == nil {
-		invalidParams.Add(request.NewErrParamRequired("Protocol"))
-	}
-	if s.TopicArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("TopicArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 // Response for Subscribe action.
@@ -2420,19 +2083,6 @@ func (s UnsubscribeInput) String() string {
 // GoString returns the string representation
 func (s UnsubscribeInput) GoString() string {
 	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *UnsubscribeInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "UnsubscribeInput"}
-	if s.SubscriptionArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("SubscriptionArn"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
 }
 
 type UnsubscribeOutput struct {

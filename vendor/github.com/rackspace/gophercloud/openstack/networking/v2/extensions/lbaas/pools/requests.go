@@ -74,9 +74,6 @@ type CreateOpts struct {
 	// current specification supports LBMethodRoundRobin and
 	// LBMethodLeastConnections as valid values for this attribute.
 	LBMethod string
-
-	// The provider of the pool
-	Provider string
 }
 
 // Create accepts a CreateOpts struct and uses the values to create a new
@@ -88,7 +85,6 @@ func Create(c *gophercloud.ServiceClient, opts CreateOpts) CreateResult {
 		Protocol string `json:"protocol"`
 		SubnetID string `json:"subnet_id"`
 		LBMethod string `json:"lb_method"`
-		Provider string `json:"provider,omitempty"`
 	}
 	type request struct {
 		Pool pool `json:"pool"`
@@ -100,7 +96,6 @@ func Create(c *gophercloud.ServiceClient, opts CreateOpts) CreateResult {
 		Protocol: opts.Protocol,
 		SubnetID: opts.SubnetID,
 		LBMethod: opts.LBMethod,
-		Provider: opts.Provider,
 	}}
 
 	var res CreateResult

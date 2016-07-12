@@ -58,7 +58,7 @@ func resourceAwsCloudFrontDistribution() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"cookies": &schema.Schema{
 										Type:     schema.TypeSet,
-										Required: true,
+										Optional: true,
 										Set:      cookiePreferenceHash,
 										MaxItems: 1,
 										Elem: &schema.Resource{
@@ -451,10 +451,6 @@ func resourceAwsCloudFrontDistribution() *schema.Resource {
 				Computed: true,
 			},
 			"etag": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"hosted_zone_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},

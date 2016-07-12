@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"net/http"
 )
 
 type Client struct {
@@ -33,10 +32,6 @@ func NewClient(creds *AzureResourceManagerCredentials) (*Client, error) {
 		tokenRequester: tr,
 		logger:         defaultLogger,
 	}, nil
-}
-
-func (c *Client) SetRequestLoggingHook(hook func (*log.Logger, *http.Request, int)) {
-	c.httpClient.RequestLogHook = hook
 }
 
 func (c *Client) SetLogger(newLogger *log.Logger) {

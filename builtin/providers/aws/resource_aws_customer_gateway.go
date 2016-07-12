@@ -20,9 +20,6 @@ func resourceAwsCustomerGateway() *schema.Resource {
 		Read:   resourceAwsCustomerGatewayRead,
 		Update: resourceAwsCustomerGatewayUpdate,
 		Delete: resourceAwsCustomerGatewayDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"bgp_asn": &schema.Schema{

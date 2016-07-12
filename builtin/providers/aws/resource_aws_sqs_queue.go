@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
@@ -77,8 +76,8 @@ func resourceAwsSqsQueue() *schema.Resource {
 					jsonb := []byte(s)
 					buffer := new(bytes.Buffer)
 					if err := json.Compact(buffer, jsonb); err != nil {
-						log.Printf("[WARN] Error compacting JSON for Policy in SNS Queue, using raw string: %s", err)
-						return s
+						log.Printf("[WARN] Error compacting JSON for Policy in SNS Queue")
+						return ""
 					}
 					return buffer.String()
 				},
@@ -178,14 +177,6 @@ func resourceAwsSqsQueueRead(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			log.Printf("ERROR Found %s", awsErr.Code())
-			if "AWS.SimpleQueueService.NonExistentQueue" == awsErr.Code() {
-				d.SetId("")
-				log.Printf("[DEBUG] SQS Queue (%s) not found", d.Get("name").(string))
-				return nil
-			}
-		}
 		return err
 	}
 

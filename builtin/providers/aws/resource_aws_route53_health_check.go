@@ -19,9 +19,6 @@ func resourceAwsRoute53HealthCheck() *schema.Resource {
 		Read:   resourceAwsRoute53HealthCheckRead,
 		Update: resourceAwsRoute53HealthCheckUpdate,
 		Delete: resourceAwsRoute53HealthCheckDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 
 		Schema: map[string]*schema.Schema{
 			"type": &schema.Schema{
