@@ -50,6 +50,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/redshift"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/aws/aws-sdk-go/service/simpledb"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -94,6 +96,8 @@ type AWSClient struct {
 	apigateway            *apigateway.APIGateway
 	autoscalingconn       *autoscaling.AutoScaling
 	s3conn                *s3.S3
+	sesConn               *ses.SES
+	simpledbconn          *simpledb.SimpleDB
 	sqsconn               *sqs.SQS
 	snsconn               *sns.SNS
 	stsconn               *sts.STS
@@ -182,7 +186,7 @@ func (c *Config) Client() (interface{}, error) {
 		log.Println("[INFO] Initializing STS connection")
 		client.stsconn = sts.New(sess)
 
-		err = c.ValidateCredentials(client.iamconn)
+		err = c.ValidateCredentials(client.stsconn)
 		if err != nil {
 			errs = append(errs, err)
 			return nil, &multierror.Error{Errors: errs}
@@ -213,6 +217,12 @@ func (c *Config) Client() (interface{}, error) {
 
 		log.Println("[INFO] Initializing S3 connection")
 		client.s3conn = s3.New(sess)
+
+		log.Println("[INFO] Initializing SES connection")
+		client.sesConn = ses.New(sess)
+
+		log.Println("[INFO] Initializing SimpleDB connection")
+		client.simpledbconn = simpledb.New(sess)
 
 		log.Println("[INFO] Initializing SQS connection")
 		client.sqsconn = sqs.New(sess)
@@ -323,9 +333,21 @@ func (c *Config) Client() (interface{}, error) {
 // ValidateRegion returns an error if the configured region is not a
 // valid aws region and nil otherwise.
 func (c *Config) ValidateRegion() error {
-	var regions = [12]string{"us-east-1", "us-west-2", "us-west-1", "eu-west-1",
-		"eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1",
-		"ap-northeast-2", "sa-east-1", "cn-north-1", "us-gov-west-1"}
+	var regions = [13]string{
+		"ap-northeast-1",
+		"ap-northeast-2",
+		"ap-south-1",
+		"ap-southeast-1",
+		"ap-southeast-2",
+		"cn-north-1",
+		"eu-central-1",
+		"eu-west-1",
+		"sa-east-1",
+		"us-east-1",
+		"us-gov-west-1",
+		"us-west-1",
+		"us-west-2",
+	}
 
 	for _, valid := range regions {
 		if c.Region == valid {
@@ -336,24 +358,8 @@ func (c *Config) ValidateRegion() error {
 }
 
 // Validate credentials early and fail before we do any graph walking.
-// In the case of an IAM role/profile with insuffecient privileges, fail
-// silently
-func (c *Config) ValidateCredentials(iamconn *iam.IAM) error {
-	_, err := iamconn.GetUser(nil)
-
-	if awsErr, ok := err.(awserr.Error); ok {
-		if awsErr.Code() == "AccessDenied" || awsErr.Code() == "ValidationError" {
-			log.Printf("[WARN] AccessDenied Error with iam.GetUser, assuming IAM role")
-			// User may be an IAM instance profile, or otherwise IAM role without the
-			// GetUser permissions, so fail silently
-			return nil
-		}
-
-		if awsErr.Code() == "SignatureDoesNotMatch" {
-			return fmt.Errorf("Failed authenticating with AWS: please verify credentials")
-		}
-	}
-
+func (c *Config) ValidateCredentials(stsconn *sts.STS) error {
+	_, err := stsconn.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	return err
 }
 

@@ -233,7 +233,7 @@
                         </li>
 
                         <li<%= sidebar_current("docs-aws-resource-elb-attachment") %>>
-                            <a href="/docs/providers/aws/r/elb_attachment.html">aws_elb</a>
+                            <a href="/docs/providers/aws/r/elb_attachment.html">aws_elb_attachment</a>
                         </li>
 
                         <li<%= sidebar_current("docs-aws-resource-instance") %>>
@@ -262,6 +262,10 @@
 
                         <li<%= sidebar_current("docs-aws-resource-spot-instance-request") %>>
                             <a href="/docs/providers/aws/r/spot_instance_request.html">aws_spot_instance_request</a>
+                        </li>
+
+                        <li<%= sidebar_current("docs-aws-resource-spot-fleet-request") %>>
+                            <a href="/docs/providers/aws/r/spot_fleet_request.html">aws_spot_fleet_request</a>
                         </li>
 
                         <li<%= sidebar_current("docs-aws-resource-volume-attachment") %>>
@@ -372,11 +376,11 @@
                     <ul class="nav nav-visible">
 
                         <li<%= sidebar_current("docs-aws-resource-elastic-transcoder-pipeline") %>>
-                            <a href="/docs/providers/aws/r/elastic_transcoder_pipeline.html">aws_elasticsearch_domain</a>
+                            <a href="/docs/providers/aws/r/elastic_transcoder_pipeline.html">aws_elastictranscoder_pipeline</a>
                         </li>
 
                         <li<%= sidebar_current("docs-aws-resource-elastic-transcoder-preset") %>>
-                            <a href="/docs/providers/aws/r/elastic_transcoder_preset.html">aws_elasticsearch_domain</a>
+                            <a href="/docs/providers/aws/r/elastic_transcoder_preset.html">aws_elastictranscoder_preset</a>
                         </li>
 
                     </ul>
@@ -694,6 +698,42 @@
 
                         <li<%= sidebar_current("docs-aws-resource-s3-bucket-notification") %>>
                             <a href="/docs/providers/aws/r/s3_bucket_notification.html">aws_s3_bucket_notification</a>
+                        </li>
+
+                    </ul>
+                </li>
+
+
+                <li<%= sidebar_current(/^docs-aws-resource-ses/) %>>
+                    <a href="#">SES Resources</a>
+                    <ul class="nav nav-visible">
+
+                        <li<%= sidebar_current("docs-aws-resource-ses-active-receipt-rule-set") %>>
+                            <a href="/docs/providers/aws/r/ses_active_receipt_rule_set.html">aws_ses_active_receipt_rule_set</a>
+                        </li>
+
+                        <li<%= sidebar_current("docs-aws-resource-ses-receipt-filter") %>>
+                            <a href="/docs/providers/aws/r/ses_receipt_filter.html">aws_ses_receipt_filter</a>
+                        </li>
+
+                        <li<%= sidebar_current("docs-aws-resource-ses-receipt-rule") %>>
+                            <a href="/docs/providers/aws/r/ses_receipt_rule.html">aws_ses_receipt_rule</a>
+                        </li>
+
+                        <li<%= sidebar_current("docs-aws-resource-ses-receipt-rule-set") %>>
+                            <a href="/docs/providers/aws/r/ses_receipt_rule_set.html">aws_ses_receipt_rule_set</a>
+                        </li>
+
+                    </ul>
+                </li>
+
+
+                <li<%= sidebar_current(/^docs-aws-resource-simpledb/) %>>
+                    <a href="#">SimpleDB Resources</a>
+                    <ul class="nav nav-visible">
+
+                        <li<%= sidebar_current("docs-aws-resource-simpledb-domain") %>>
+                            <a href="/docs/providers/aws/r/simpledb_domain.html">aws_simpledb_domain</a>
                         </li>
 
                     </ul>

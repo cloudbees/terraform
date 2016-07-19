@@ -114,6 +114,10 @@ The supported built-in functions are:
   * `concat(list1, list2)` - Combines two or more lists into a single list.
      Example: `concat(aws_instance.db.*.tags.Name, aws_instance.web.*.tags.Name)`
 
+  * `distinct(list)` - Removes duplicate items from a list. Keeps the first
+     occurrence of each element, and removes subsequent occurences.
+     Example: `distinct(var.usernames)`
+
   * `element(list, index)` - Returns a single element from a list
       at the given index. If the index is greater than the number of
       elements, this function will wrap using a standard mod algorithm.
@@ -148,7 +152,7 @@ The supported built-in functions are:
   * `index(list, elem)` - Finds the index of a given element in a list. Example:
       `index(aws_instance.foo.*.tags.Name, "foo-test")`
 
-  * `join(delim, list)` - Joins the list with the delimiter. A list is
+  * `join(delim, list)` - Joins the list with the delimiter for a resultant string. A list is
       only possible with splat variables from resources with a count
       greater than one. Example: `join(",", aws_instance.foo.*.id)`
 
@@ -156,6 +160,8 @@ The supported built-in functions are:
     item, which may be a string, list of strings, or map from string to string.
     Note that if the item is a string, the return value includes the double
     quotes.
+
+  * `keys(map)` - Returns a lexically sorted, JSON-encoded list of the map keys.
 
   * `length(list)` - Returns a number of members in a given list
       or a number of characters in a given string.
@@ -213,6 +219,8 @@ The supported built-in functions are:
   * `upper(string)` - Returns a copy of the string with all Unicode letters mapped to their upper case.
 
   * `uuid()` - Returns a UUID string in RFC 4122 v4 format. This string will change with every invocation of the function, so in order to prevent diffs on every plan & apply, it must be used with the [`ignore_changes`](/docs/configuration/resources.html#ignore-changes) lifecycle attribute.
+
+  * `values(map)` - Returns a JSON-encoded list of the map values, in the order of the keys returned by the `keys` function.
 
 ## Templates
 

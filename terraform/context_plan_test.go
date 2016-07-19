@@ -911,6 +911,73 @@ func TestContext2Plan_computedDataResource(t *testing.T) {
 	}
 }
 
+// Higher level test at TestResource_dataSourceListPlanPanic
+func TestContext2Plan_dataSourceTypeMismatch(t *testing.T) {
+	m := testModule(t, "plan-data-source-type-mismatch")
+	p := testProvider("aws")
+	p.ValidateResourceFn = func(t string, c *ResourceConfig) (ws []string, es []error) {
+		// Emulate the type checking behavior of helper/schema based validation
+		if t == "aws_instance" {
+			ami, _ := c.Get("ami")
+			switch a := ami.(type) {
+			case string:
+				// ok
+			default:
+				es = append(es, fmt.Errorf("Expected ami to be string, got %T", a))
+			}
+		}
+		return
+	}
+	p.DiffFn = func(
+		info *InstanceInfo,
+		state *InstanceState,
+		c *ResourceConfig) (*InstanceDiff, error) {
+		if info.Type == "aws_instance" {
+			// If we get to the diff, we should be able to assume types
+			ami, _ := c.Get("ami")
+			_ = ami.(string)
+		}
+		return nil, nil
+	}
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		// Pretend like we ran a Refresh and the AZs data source was populated.
+		State: &State{
+			Modules: []*ModuleState{
+				&ModuleState{
+					Path: rootModulePath,
+					Resources: map[string]*ResourceState{
+						"data.aws_availability_zones.azs": &ResourceState{
+							Type: "aws_availability_zones",
+							Primary: &InstanceState{
+								ID: "i-abc123",
+								Attributes: map[string]string{
+									"names.#": "2",
+									"names.0": "us-east-1a",
+									"names.1": "us-east-1b",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	_, err := ctx.Plan()
+
+	if err == nil {
+		t.Fatalf("Expected err, got none!")
+	}
+	expected := "Expected ami to be string"
+	if !strings.Contains(err.Error(), expected) {
+		t.Fatalf("expected:\n\n%s\n\nto contain:\n\n%s", err, expected)
+	}
+}
+
 func TestContext2Plan_dataResourceBecomesComputed(t *testing.T) {
 	m := testModule(t, "plan-data-resource-becomes-computed")
 	p := testProvider("aws")
@@ -2215,6 +2282,112 @@ func TestContext2Plan_ignoreChanges(t *testing.T) {
 
 	actual := strings.TrimSpace(plan.String())
 	expected := strings.TrimSpace(testTerraformPlanIgnoreChangesStr)
+	if actual != expected {
+		t.Fatalf("bad:\n%s\n\nexpected\n\n%s", actual, expected)
+	}
+}
+
+func TestContext2Plan_moduleMapLiteral(t *testing.T) {
+	m := testModule(t, "plan-module-map-literal")
+	p := testProvider("aws")
+	p.ApplyFn = testApplyFn
+	p.DiffFn = func(i *InstanceInfo, s *InstanceState, c *ResourceConfig) (*InstanceDiff, error) {
+		// Here we verify that both the populated and empty map literals made it
+		// through to the resource attributes
+		val, _ := c.Get("tags")
+		m, ok := val.(map[string]interface{})
+		if !ok {
+			t.Fatalf("Tags attr not map: %#v", val)
+		}
+		if m["foo"] != "bar" {
+			t.Fatalf("Bad value in tags attr: %#v", m)
+		}
+		{
+			val, _ := c.Get("meta")
+			m, ok := val.(map[string]interface{})
+			if !ok {
+				t.Fatalf("Meta attr not map: %#v", val)
+			}
+			if len(m) != 0 {
+				t.Fatalf("Meta attr not empty: %#v", val)
+			}
+		}
+		return nil, nil
+	}
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+}
+
+func TestContext2Plan_computedValueInMap(t *testing.T) {
+	m := testModule(t, "plan-computed-value-in-map")
+	p := testProvider("aws")
+	p.DiffFn = func(info *InstanceInfo, state *InstanceState, c *ResourceConfig) (*InstanceDiff, error) {
+		switch info.Type {
+		case "aws_computed_source":
+			return &InstanceDiff{
+				Attributes: map[string]*ResourceAttrDiff{
+					"computed_read_only": &ResourceAttrDiff{
+						NewComputed: true,
+					},
+				},
+			}, nil
+		}
+
+		return testDiffFn(info, state, c)
+	}
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	plan, err := ctx.Plan()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	actual := strings.TrimSpace(plan.String())
+	expected := strings.TrimSpace(testTerraformPlanComputedValueInMap)
+	if actual != expected {
+		t.Fatalf("bad:\n%s\n\nexpected\n\n%s", actual, expected)
+	}
+}
+
+func TestContext2Plan_moduleVariableFromSplat(t *testing.T) {
+	m := testModule(t, "plan-module-variable-from-splat")
+	p := testProvider("aws")
+	p.DiffFn = testDiffFn
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	plan, err := ctx.Plan()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	actual := strings.TrimSpace(plan.String())
+	expected := strings.TrimSpace(testTerraformPlanModuleVariableFromSplat)
 	if actual != expected {
 		t.Fatalf("bad:\n%s\n\nexpected\n\n%s", actual, expected)
 	}

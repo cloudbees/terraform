@@ -261,6 +261,31 @@ func TestInterpolationFuncConcatListOfMaps(t *testing.T) {
 	}
 }
 
+func TestInterpolateFuncDistinct(t *testing.T) {
+	testFunction(t, testFunctionConfig{
+		Cases: []testFunctionCase{
+			// 3 duplicates
+			{
+				`${distinct(concat(split(",", "user1,user2,user3"), split(",", "user1,user2,user3")))}`,
+				[]interface{}{"user1", "user2", "user3"},
+				false,
+			},
+			// 1 duplicate
+			{
+				`${distinct(concat(split(",", "user1,user2,user3"), split(",", "user1,user4")))}`,
+				[]interface{}{"user1", "user2", "user3", "user4"},
+				false,
+			},
+			// too many args
+			{
+				`${distinct(concat(split(",", "user1,user2,user3"), split(",", "user1,user4")), "foo")}`,
+				nil,
+				true,
+			},
+		},
+	})
+}
+
 func TestInterpolateFuncFile(t *testing.T) {
 	tf, err := ioutil.TempFile("", "tf")
 	if err != nil {
@@ -865,6 +890,57 @@ func TestInterpolateFuncKeys(t *testing.T) {
 	})
 }
 
+// Confirm that keys return in sorted order, and values return in the order of
+// their sorted keys.
+func TestInterpolateFuncKeyValOrder(t *testing.T) {
+	testFunction(t, testFunctionConfig{
+		Vars: map[string]ast.Variable{
+			"var.foo": ast.Variable{
+				Type: ast.TypeMap,
+				Value: map[string]ast.Variable{
+					"D": ast.Variable{
+						Value: "2",
+						Type:  ast.TypeString,
+					},
+					"C": ast.Variable{
+						Value: "Y",
+						Type:  ast.TypeString,
+					},
+					"A": ast.Variable{
+						Value: "X",
+						Type:  ast.TypeString,
+					},
+					"10": ast.Variable{
+						Value: "Z",
+						Type:  ast.TypeString,
+					},
+					"1": ast.Variable{
+						Value: "4",
+						Type:  ast.TypeString,
+					},
+					"3": ast.Variable{
+						Value: "W",
+						Type:  ast.TypeString,
+					},
+				},
+			},
+		},
+		Cases: []testFunctionCase{
+			{
+				`${keys(var.foo)}`,
+				[]interface{}{"1", "10", "3", "A", "C", "D"},
+				false,
+			},
+
+			{
+				`${values(var.foo)}`,
+				[]interface{}{"4", "Z", "W", "X", "Y", "2"},
+				false,
+			},
+		},
+	})
+}
+
 func TestInterpolateFuncValues(t *testing.T) {
 	testFunction(t, testFunctionConfig{
 		Vars: map[string]ast.Variable{
@@ -927,6 +1003,7 @@ func TestInterpolateFuncElement(t *testing.T) {
 		Vars: map[string]ast.Variable{
 			"var.a_list":       interfaceToVariableSwallowError([]string{"foo", "baz"}),
 			"var.a_short_list": interfaceToVariableSwallowError([]string{"foo"}),
+			"var.empty_list":   interfaceToVariableSwallowError([]interface{}{}),
 		},
 		Cases: []testFunctionCase{
 			{
@@ -951,6 +1028,13 @@ func TestInterpolateFuncElement(t *testing.T) {
 			// Negative number should fail
 			{
 				`${element(var.a_short_list, "-1")}`,
+				nil,
+				true,
+			},
+
+			// Empty list should fail
+			{
+				`${element(var.empty_list, 0)}`,
 				nil,
 				true,
 			},
