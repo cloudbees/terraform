@@ -70,6 +70,7 @@ func resourceArmVirtualMachine() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				ForceNew: true,
 				StateFunc: func(id interface{}) string {
 					return strings.ToLower(id.(string))
 				},
@@ -206,6 +207,12 @@ func resourceArmVirtualMachine() *schema.Resource {
 				},
 			},
 
+			"delete_data_disks_on_termination": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+
 			"os_profile": {
 				Type:     schema.TypeSet,
 				Required: true,
@@ -214,8 +221,8 @@ func resourceArmVirtualMachine() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"computer_name": {
 							Type:     schema.TypeString,
-							Optional: true,
 							ForceNew: true,
+							Required: true,
 						},
 
 						"admin_username": {
@@ -339,7 +346,7 @@ func resourceArmVirtualMachine() *schema.Resource {
 						},
 
 						"vault_certificates": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -561,19 +568,43 @@ func resourceArmVirtualMachineDelete(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	if deleteOsDisk := d.Get("delete_os_disk_on_termination").(bool); !deleteOsDisk {
-		log.Printf("[INFO] delete_os_disk_on_termination is false, skipping delete")
-		return nil
+	// delete OS Disk if opted in
+	if deleteOsDisk := d.Get("delete_os_disk_on_termination").(bool); deleteOsDisk {
+		log.Printf("[INFO] delete_os_disk_on_termination is enabled, deleting")
+
+		osDisk, err := expandAzureRmVirtualMachineOsDisk(d)
+		if err != nil {
+			return fmt.Errorf("Error expanding OS Disk: %s", err)
+		}
+
+		if err = resourceArmVirtualMachineDeleteVhd(*osDisk.Vhd.URI, resGroup, meta); err != nil {
+			return fmt.Errorf("Error deleting OS Disk VHD: %s", err)
+		}
 	}
 
-	osDisk, err := expandAzureRmVirtualMachineOsDisk(d)
-	if err != nil {
-		return fmt.Errorf("Error expanding OS Disk")
+	// delete Data disks if opted in
+	if deleteDataDisks := d.Get("delete_data_disks_on_termination").(bool); deleteDataDisks {
+		log.Printf("[INFO] delete_data_disks_on_termination is enabled, deleting each data disk")
+
+		disks, err := expandAzureRmVirtualMachineDataDisk(d)
+		if err != nil {
+			return fmt.Errorf("Error expanding Data Disks: %s", err)
+		}
+
+		for _, disk := range disks {
+			if err = resourceArmVirtualMachineDeleteVhd(*disk.Vhd.URI, resGroup, meta); err != nil {
+				return fmt.Errorf("Error deleting Data Disk VHD: %s", err)
+			}
+		}
 	}
 
-	vhdURL, err := url.Parse(*osDisk.Vhd.URI)
+	return nil
+}
+
+func resourceArmVirtualMachineDeleteVhd(uri, resGroup string, meta interface{}) error {
+	vhdURL, err := url.Parse(uri)
 	if err != nil {
-		return fmt.Errorf("Cannot parse OS Disk VHD URI: %s", err)
+		return fmt.Errorf("Cannot parse Disk VHD URI: %s", err)
 	}
 
 	// VHD URI is in the form: https://storageAccountName.blob.core.windows.net/containerName/blobName
@@ -582,12 +613,12 @@ func resourceArmVirtualMachineDelete(d *schema.ResourceData, meta interface{}) e
 	containerName := path[0]
 	blobName := path[1]
 
-	blobClient, storageAccountExists, err := meta.(*ArmClient).getBlobStorageClientForStorageAccount(id.ResourceGroup, storageAccountName)
+	blobClient, saExists, err := meta.(*ArmClient).getBlobStorageClientForStorageAccount(resGroup, storageAccountName)
 	if err != nil {
-		return fmt.Errorf("Error creating blob store account for VHD deletion: %s", err)
+		return fmt.Errorf("Error creating blob store client for VHD deletion: %s", err)
 	}
 
-	if !storageAccountExists {
+	if !saExists {
 		log.Printf("[INFO] Storage Account %q doesn't exist so the VHD blob won't exist", storageAccountName)
 		return nil
 	}
@@ -847,9 +878,11 @@ func expandAzureRmVirtualMachineOsProfile(d *schema.ResourceData) (*compute.OSPr
 
 	adminUsername := osProfile["admin_username"].(string)
 	adminPassword := osProfile["admin_password"].(string)
+	computerName := osProfile["computer_name"].(string)
 
 	profile := &compute.OSProfile{
 		AdminUsername: &adminUsername,
+		ComputerName:  &computerName,
 	}
 
 	if adminPassword != "" {
@@ -883,9 +916,6 @@ func expandAzureRmVirtualMachineOsProfile(d *schema.ResourceData) (*compute.OSPr
 		}
 	}
 
-	if v := osProfile["computer_name"].(string); v != "" {
-		profile.ComputerName = &v
-	}
 	if v := osProfile["custom_data"].(string); v != "" {
 		profile.CustomData = &v
 	}
@@ -908,7 +938,7 @@ func expandAzureRmVirtualMachineOsProfileSecrets(d *schema.ResourceData) *[]comp
 		}
 
 		if v := config["vault_certificates"]; v != nil {
-			certsConfig := v.(*schema.Set).List()
+			certsConfig := v.([]interface{})
 			certs := make([]compute.VaultCertificate, 0, len(certsConfig))
 			for _, certConfig := range certsConfig {
 				config := certConfig.(map[string]interface{})

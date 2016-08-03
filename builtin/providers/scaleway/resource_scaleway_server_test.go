@@ -23,6 +23,32 @@ func TestAccScalewayServer_Basic(t *testing.T) {
 						"scaleway_server.base", "type", "C1"),
 					resource.TestCheckResourceAttr(
 						"scaleway_server.base", "name", "test"),
+					resource.TestCheckResourceAttr(
+						"scaleway_server.base", "tags.0", "terraform-test"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccScalewayServer_SecurityGroup(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckScalewayServerDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccCheckScalewayServerConfig_SecurityGroup,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckScalewayServerExists("scaleway_server.base"),
+					testAccCheckScalewayServerSecurityGroup("scaleway_server.base", "blue"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckScalewayServerConfig_SecurityGroup_Update,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckScalewayServerExists("scaleway_server.base"),
+					testAccCheckScalewayServerSecurityGroup("scaleway_server.base", "red"),
 				),
 			},
 		},
@@ -75,6 +101,28 @@ func testAccCheckScalewayServerAttributes(n string) resource.TestCheckFunc {
 	}
 }
 
+func testAccCheckScalewayServerSecurityGroup(n, securityGroupName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Unknown resource: %s", n)
+		}
+
+		client := testAccProvider.Meta().(*Client).scaleway
+		server, err := client.GetServer(rs.Primary.ID)
+
+		if err != nil {
+			return err
+		}
+
+		if server.SecurityGroup.Name != securityGroupName {
+			return fmt.Errorf("Server has wrong security_group")
+		}
+
+		return nil
+	}
+}
+
 func testAccCheckScalewayServerExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -110,4 +158,45 @@ resource "scaleway_server" "base" {
   # ubuntu 14.04
   image = "%s"
   type = "C1"
+  tags = [ "terraform-test" ]
+}`, armImageIdentifier)
+
+var testAccCheckScalewayServerConfig_SecurityGroup = fmt.Sprintf(`
+resource "scaleway_security_group" "blue" {
+  name = "blue"
+  description = "blue"
+}
+
+resource "scaleway_security_group" "red" {
+  name = "red"
+  description = "red"
+}
+
+resource "scaleway_server" "base" {
+  name = "test"
+  # ubuntu 14.04
+  image = "%s"
+  type = "C1"
+  tags = [ "terraform-test" ]
+  security_group = "${scaleway_security_group.blue.id}"
+}`, armImageIdentifier)
+
+var testAccCheckScalewayServerConfig_SecurityGroup_Update = fmt.Sprintf(`
+resource "scaleway_security_group" "blue" {
+  name = "blue"
+  description = "blue"
+}
+
+resource "scaleway_security_group" "red" {
+  name = "red"
+  description = "red"
+}
+
+resource "scaleway_server" "base" {
+  name = "test"
+  # ubuntu 14.04
+  image = "%s"
+  type = "C1"
+  tags = [ "terraform-test" ]
+  security_group = "${scaleway_security_group.red.id}"
 }`, armImageIdentifier)

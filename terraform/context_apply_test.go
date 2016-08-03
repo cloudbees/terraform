@@ -843,7 +843,7 @@ func TestContext2Apply_compute(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	ctx.variables = map[string]string{"value": "1"}
+	ctx.variables = map[string]interface{}{"value": "1"}
 
 	state, err := ctx.Apply()
 	if err != nil {
@@ -1134,8 +1134,12 @@ func TestContext2Apply_mapVariableOverride(t *testing.T) {
 		Providers: map[string]ResourceProviderFactory{
 			"aws": testProviderFuncFixed(p),
 		},
-		Variables: map[string]string{
-			"images.us-west-2": "overridden",
+		Variables: map[string]interface{}{
+			"images": []map[string]interface{}{
+				map[string]interface{}{
+					"us-west-2": "overridden",
+				},
+			},
 		},
 	})
 
@@ -1510,7 +1514,7 @@ func TestContext2Apply_moduleVarResourceCount(t *testing.T) {
 		Providers: map[string]ResourceProviderFactory{
 			"aws": testProviderFuncFixed(p),
 		},
-		Variables: map[string]string{
+		Variables: map[string]interface{}{
 			"count": "2",
 		},
 		Destroy: true,
@@ -1529,7 +1533,7 @@ func TestContext2Apply_moduleVarResourceCount(t *testing.T) {
 		Providers: map[string]ResourceProviderFactory{
 			"aws": testProviderFuncFixed(p),
 		},
-		Variables: map[string]string{
+		Variables: map[string]interface{}{
 			"count": "5",
 		},
 	})
@@ -1623,7 +1627,7 @@ func TestContext2Apply_multiVar(t *testing.T) {
 		Providers: map[string]ResourceProviderFactory{
 			"aws": testProviderFuncFixed(p),
 		},
-		Variables: map[string]string{
+		Variables: map[string]interface{}{
 			"count": "3",
 		},
 	})
@@ -1651,7 +1655,7 @@ func TestContext2Apply_multiVar(t *testing.T) {
 			Providers: map[string]ResourceProviderFactory{
 				"aws": testProviderFuncFixed(p),
 			},
-			Variables: map[string]string{
+			Variables: map[string]interface{}{
 				"count": "1",
 			},
 		})
@@ -1813,7 +1817,7 @@ func TestContext2Apply_Provisioner_compute(t *testing.T) {
 		Provisioners: map[string]ResourceProvisionerFactory{
 			"shell": testProvisionerFuncFixed(pr),
 		},
-		Variables: map[string]string{
+		Variables: map[string]interface{}{
 			"value": "1",
 		},
 	})
@@ -1937,7 +1941,7 @@ func TestContext2Apply_provisionerFail(t *testing.T) {
 		Provisioners: map[string]ResourceProvisionerFactory{
 			"shell": testProvisionerFuncFixed(pr),
 		},
-		Variables: map[string]string{
+		Variables: map[string]interface{}{
 			"value": "1",
 		},
 	})
@@ -2587,7 +2591,7 @@ func TestContext2Apply_Provisioner_ConnInfo(t *testing.T) {
 		Provisioners: map[string]ResourceProvisionerFactory{
 			"shell": testProvisionerFuncFixed(pr),
 		},
-		Variables: map[string]string{
+		Variables: map[string]interface{}{
 			"value": "1",
 			"pass":  "test",
 		},
@@ -2813,7 +2817,7 @@ func TestContext2Apply_destroyModuleWithAttrsReferencingResource(t *testing.T) {
 			Providers: map[string]ResourceProviderFactory{
 				"aws": testProviderFuncFixed(p),
 			},
-			Variables: map[string]string{
+			Variables: map[string]interface{}{
 				"key_name": "foobarkey",
 			},
 		})
@@ -4268,9 +4272,19 @@ func TestContext2Apply_vars(t *testing.T) {
 		Providers: map[string]ResourceProviderFactory{
 			"aws": testProviderFuncFixed(p),
 		},
-		Variables: map[string]string{
-			"foo":            "us-west-2",
-			"amis.us-east-1": "override",
+		Variables: map[string]interface{}{
+			"foo":       "us-west-2",
+			"test_list": []interface{}{"Hello", "World"},
+			"test_map": map[string]interface{}{
+				"Hello": "World",
+				"Foo":   "Bar",
+				"Baz":   "Foo",
+			},
+			"amis": []map[string]interface{}{
+				map[string]interface{}{
+					"us-east-1": "override",
+				},
+			},
 		},
 	})
 
@@ -4300,8 +4314,13 @@ func TestContext2Apply_vars(t *testing.T) {
 
 func TestContext2Apply_varsEnv(t *testing.T) {
 	// Set the env var
-	old := tempEnv(t, "TF_VAR_ami", "baz")
-	defer os.Setenv("TF_VAR_ami", old)
+	old_ami := tempEnv(t, "TF_VAR_ami", "baz")
+	old_list := tempEnv(t, "TF_VAR_list", `["Hello", "World"]`)
+	old_map := tempEnv(t, "TF_VAR_map", `{"Hello" = "World", "Foo" = "Bar", "Baz" = "Foo"}`)
+
+	defer os.Setenv("TF_VAR_ami", old_ami)
+	defer os.Setenv("TF_VAR_list", old_list)
+	defer os.Setenv("TF_VAR_list", old_map)
 
 	m := testModule(t, "apply-vars-env")
 	p := testProvider("aws")
@@ -4501,6 +4520,55 @@ func TestContext2Apply_singleDestroy(t *testing.T) {
 
 	if invokeCount != 3 {
 		t.Fatalf("bad: %d", invokeCount)
+	}
+}
+
+// GH-7824
+func TestContext2Apply_issue7824(t *testing.T) {
+	p := testProvider("template")
+	p.ResourcesReturn = append(p.ResourcesReturn, ResourceType{
+		Name: "template_file",
+	})
+
+	p.ApplyFn = testApplyFn
+	p.DiffFn = testDiffFn
+
+	// Apply cleanly step 0
+	ctx := testContext2(t, &ContextOpts{
+		Module: testModule(t, "issue-7824"),
+		Providers: map[string]ResourceProviderFactory{
+			"template": testProviderFuncFixed(p),
+		},
+	})
+
+	plan, err := ctx.Plan()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Write / Read plan to simulate running it through a Plan file
+	var buf bytes.Buffer
+	if err := WritePlan(plan, &buf); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	planFromFile, err := ReadPlan(&buf)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	ctx, err = planFromFile.Context(&ContextOpts{
+		Providers: map[string]ResourceProviderFactory{
+			"template": testProviderFuncFixed(p),
+		},
+	})
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	_, err = ctx.Apply()
+	if err != nil {
+		t.Fatalf("err: %s", err)
 	}
 }
 
