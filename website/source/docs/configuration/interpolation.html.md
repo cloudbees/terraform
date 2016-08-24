@@ -27,9 +27,8 @@ will be rendered as a literal `${foo}`.
 variable name. For example, `${var.foo}` will interpolate the
 `foo` variable value. If the variable is a map, then you
 can reference static keys in the map with the syntax
-`var.MAP.KEY`. For example, `${var.amis.us-east-1}` would
-get the value of the `us-east-1` key within the `amis` variable
-that is a map.
+`var.MAP["KEY"]`. For example, `${var.amis["us-east-1"]` would
+get the value of the `us-east-1` key within the `amis` map variable.
 
 **To reference attributes of your own resource**, the syntax is
 `self.ATTRIBUTE`. For example `${self.private_ip_address}` will
@@ -165,8 +164,7 @@ The supported built-in functions are:
 
   * `keys(map)` - Returns a lexically sorted list of the map keys.
 
-  * `length(list)` - Returns a number of members in a given list, map, or string.
-      or a number of characters in a given string.
+  * `length(list)` - Returns a number of members in a given list or map, or a number of characters in a given string.
       * `${length(split(",", "a,b,c"))}` = 3
       * `${length("a,b,c")}` = 5
       * `${length(map("key", "val"))}` = 1
@@ -194,7 +192,7 @@ The supported built-in functions are:
     * `map("us-east", list("a", "b", "c"), "us-west", list("b", "c", "d"))`
 
   * `merge(map1, map2, ...)` - Returns the union of 2 or more maps. The maps
-	are consumed in the order provided, and duplciate keys overwrite previous
+	are consumed in the order provided, and duplicate keys overwrite previous
 	entries.
 	* `${merge(map("a", "b"), map("c", "d"))}` returns `{"a": "b", "c": "d"}`
 
