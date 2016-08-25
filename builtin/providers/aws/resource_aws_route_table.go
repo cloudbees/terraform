@@ -387,7 +387,7 @@ func resourceAwsRouteTableDelete(d *schema.ResourceData, meta interface{}) error
 		Pending: []string{"ready"},
 		Target:  []string{},
 		Refresh: resourceAwsRouteTableStateRefreshFunc(conn, d.Id()),
-		Timeout: 1 * time.Minute,
+		Timeout: 2 * time.Minute,
 	}
 	if _, err := stateConf.WaitForState(); err != nil {
 		return fmt.Errorf(
