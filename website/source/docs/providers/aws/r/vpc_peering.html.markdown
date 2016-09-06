@@ -12,8 +12,6 @@ Provides an VPC Peering Connection resource.
 
 ## Example Usage
 
-Basic usage:
-
 ```
 resource "aws_vpc_peering_connection" "foo" {
     peer_owner_id = "${var.peer_owner_id}"
@@ -48,7 +46,6 @@ resource "aws_vpc_peering_connection" "foo" {
     peer_owner_id = "${var.peer_owner_id}"
     peer_vpc_id = "${aws_vpc.bar.id}"
     vpc_id = "${aws_vpc.foo.id}"
-
     auto_accept = true
 
     tags {
@@ -67,9 +64,15 @@ resource "aws_vpc" "bar" {
 
 ## Argument Reference
 
+-> **Note:** Modifying the VPC Peering Connection options requires peering to be active. An automatic activation
+can be done using the [`auto_accept`](vpc_peering.html#auto_accept) attribute. Alternatively, the VPC Peering
+Connection has to be made active manually using other means. See [notes](vpc_peering.html#notes) below for
+more information.
+
 The following arguments are supported:
 
 * `peer_owner_id` - (Required) The AWS account ID of the owner of the peer VPC.
+   Defaults to the account ID the [AWS provider][1] is currently connected to.
 * `peer_vpc_id` - (Required) The ID of the VPC with which you are creating the VPC Peering Connection.
 * `vpc_id` - (Required) The ID of the requester VPC.
 * `auto_accept` - (Optional) Accept the peering (you need to be the owner of both VPCs).
@@ -118,3 +121,5 @@ VPC Peering resources can be imported using the `vpc peering id`, e.g.
 ```
 $ terraform import aws_vpc_peering_connection.test_connection pcx-111aaa111
 ```
+
+[1]: /docs/providers/aws/index.html

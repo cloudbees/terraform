@@ -149,6 +149,39 @@ module.test:
 	}
 }
 
+func TestContext2Apply_refCount(t *testing.T) {
+	m := testModule(t, "apply-ref-count")
+	p := testProvider("aws")
+	p.ApplyFn = testApplyFn
+	p.DiffFn = testDiffFn
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	state, err := ctx.Apply()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mod := state.RootModule()
+	if len(mod.Resources) < 2 {
+		t.Fatalf("bad: %#v", mod.Resources)
+	}
+
+	actual := strings.TrimSpace(state.String())
+	expected := strings.TrimSpace(testTerraformApplyRefCountStr)
+	if actual != expected {
+		t.Fatalf("bad: \n%s", actual)
+	}
+}
+
 func TestContext2Apply_providerAlias(t *testing.T) {
 	m := testModule(t, "apply-provider-alias")
 	p := testProvider("aws")
@@ -1118,6 +1151,34 @@ func TestContext2Apply_countVariable(t *testing.T) {
 
 	actual := strings.TrimSpace(state.String())
 	expected := strings.TrimSpace(testTerraformApplyCountVariableStr)
+	if actual != expected {
+		t.Fatalf("bad: \n%s", actual)
+	}
+}
+
+func TestContext2Apply_countVariableRef(t *testing.T) {
+	m := testModule(t, "apply-count-variable-ref")
+	p := testProvider("aws")
+	p.ApplyFn = testApplyFn
+	p.DiffFn = testDiffFn
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	state, err := ctx.Apply()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	actual := strings.TrimSpace(state.String())
+	expected := strings.TrimSpace(testTerraformApplyCountVariableRefStr)
 	if actual != expected {
 		t.Fatalf("bad: \n%s", actual)
 	}
@@ -2405,6 +2466,59 @@ func TestContext2Apply_provisionerMultiSelfRef(t *testing.T) {
 	}
 }
 
+func TestContext2Apply_provisionerMultiSelfRefCount(t *testing.T) {
+	var lock sync.Mutex
+	commands := make([]string, 0, 5)
+
+	m := testModule(t, "apply-provisioner-multi-self-ref-count")
+	p := testProvider("aws")
+	pr := testProvisioner()
+	p.ApplyFn = testApplyFn
+	p.DiffFn = testDiffFn
+	pr.ApplyFn = func(rs *InstanceState, c *ResourceConfig) error {
+		lock.Lock()
+		defer lock.Unlock()
+
+		val, ok := c.Config["command"]
+		if !ok {
+			t.Fatalf("bad value for command: %v %#v", val, c)
+		}
+
+		commands = append(commands, val.(string))
+		return nil
+	}
+
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+		Provisioners: map[string]ResourceProvisionerFactory{
+			"shell": testProvisionerFuncFixed(pr),
+		},
+	})
+
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if _, err := ctx.Apply(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify apply was invoked
+	if !pr.ApplyCalled {
+		t.Fatalf("provisioner not invoked")
+	}
+
+	// Verify our result
+	sort.Strings(commands)
+	expectedCommands := []string{"3", "3", "3"}
+	if !reflect.DeepEqual(commands, expectedCommands) {
+		t.Fatalf("bad: %#v", commands)
+	}
+}
+
 // Provisioner should NOT run on a diff, only create
 func TestContext2Apply_Provisioner_Diff(t *testing.T) {
 	m := testModule(t, "apply-provisioner-diff")
@@ -2674,6 +2788,63 @@ func TestContext2Apply_destroy(t *testing.T) {
 	actual2 := h.IDs
 	if !reflect.DeepEqual(actual2, expected2) {
 		t.Fatalf("expected: %#v\n\ngot:%#v", expected2, actual2)
+	}
+}
+
+// https://github.com/hashicorp/terraform/issues/2767
+func TestContext2Apply_destroyModulePrefix(t *testing.T) {
+	m := testModule(t, "apply-destroy-module-resource-prefix")
+	h := new(MockHook)
+	p := testProvider("aws")
+	p.ApplyFn = testApplyFn
+	p.DiffFn = testDiffFn
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Hooks:  []Hook{h},
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	// First plan and apply a create operation
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	state, err := ctx.Apply()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Verify that we got the apply info correct
+	if v := h.PreApplyInfo.HumanId(); v != "module.child.aws_instance.foo" {
+		t.Fatalf("bad: %s", v)
+	}
+
+	// Next, plan and apply a destroy operation and reset the hook
+	h = new(MockHook)
+	ctx = testContext2(t, &ContextOpts{
+		Destroy: true,
+		State:   state,
+		Module:  m,
+		Hooks:   []Hook{h},
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	if _, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	state, err = ctx.Apply()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// Test that things were destroyed
+	if v := h.PreApplyInfo.HumanId(); v != "module.child.aws_instance.foo" {
+		t.Fatalf("bad: %s", v)
 	}
 }
 
@@ -4860,6 +5031,47 @@ func TestContext2Apply_ignoreChangesWithDep(t *testing.T) {
 	expected := strings.TrimSpace(s.String())
 	if actual != expected {
 		t.Fatalf("bad: \n%s", actual)
+	}
+}
+
+func TestContext2Apply_ignoreChangesWildcard(t *testing.T) {
+	m := testModule(t, "apply-ignore-changes-wildcard")
+	p := testProvider("aws")
+	p.ApplyFn = testApplyFn
+	p.DiffFn = testDiffFn
+	ctx := testContext2(t, &ContextOpts{
+		Module: m,
+		Providers: map[string]ResourceProviderFactory{
+			"aws": testProviderFuncFixed(p),
+		},
+	})
+
+	if p, err := ctx.Plan(); err != nil {
+		t.Fatalf("err: %s", err)
+	} else {
+		t.Logf(p.String())
+	}
+
+	state, err := ctx.Apply()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	mod := state.RootModule()
+	if len(mod.Resources) != 1 {
+		t.Fatalf("bad: %s", state)
+	}
+
+	actual := strings.TrimSpace(state.String())
+	// Expect no changes from original state
+	expected := strings.TrimSpace(`
+aws_instance.foo:
+  ID = foo
+  required_field = set
+  type = aws_instance
+`)
+	if actual != expected {
+		t.Fatalf("expected:\n%s\ngot:\n%s", expected, actual)
 	}
 }
 
