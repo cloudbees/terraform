@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -439,8 +440,9 @@ func TestSchemaMap_Diff(t *testing.T) {
 			Diff: &terraform.InstanceDiff{
 				Attributes: map[string]*terraform.ResourceAttrDiff{
 					"availability_zone": &terraform.ResourceAttrDiff{
-						Old: "",
-						New: "${var.foo}",
+						Old:         "",
+						New:         "${var.foo}",
+						NewComputed: true,
 					},
 				},
 			},
@@ -1675,8 +1677,9 @@ func TestSchemaMap_Diff(t *testing.T) {
 						New: "1",
 					},
 					"route.~1.gateway": &terraform.ResourceAttrDiff{
-						Old: "",
-						New: "${var.foo}",
+						Old:         "",
+						New:         "${var.foo}",
+						NewComputed: true,
 					},
 				},
 			},
@@ -2019,9 +2022,10 @@ func TestSchemaMap_Diff(t *testing.T) {
 						RequiresNew: true,
 					},
 					"instances.3": &terraform.ResourceAttrDiff{
-						Old:        "foo",
-						New:        "",
-						NewRemoved: true,
+						Old:         "foo",
+						New:         "",
+						NewRemoved:  true,
+						RequiresNew: true,
 					},
 				},
 			},
@@ -2331,9 +2335,10 @@ func TestSchemaMap_Diff(t *testing.T) {
 						New: "2",
 					},
 					"instances.2": &terraform.ResourceAttrDiff{
-						Old:        "22",
-						New:        "",
-						NewRemoved: true,
+						Old:         "22",
+						New:         "",
+						NewRemoved:  true,
+						RequiresNew: true,
 					},
 					"instances.3": &terraform.ResourceAttrDiff{
 						Old:         "333",
@@ -2416,6 +2421,73 @@ func TestSchemaMap_Diff(t *testing.T) {
 			Diff: &terraform.InstanceDiff{
 				Attributes:     map[string]*terraform.ResourceAttrDiff{},
 				DestroyTainted: true,
+			},
+
+			Err: false,
+		},
+
+		"removed optional items should trigger ForceNew": {
+			Schema: map[string]*Schema{
+				"description": &Schema{
+					Type:     TypeString,
+					ForceNew: true,
+					Optional: true,
+				},
+			},
+
+			State: &terraform.InstanceState{
+				Attributes: map[string]string{
+					"description": "foo",
+				},
+			},
+
+			Config: map[string]interface{}{},
+
+			Diff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"description": &terraform.ResourceAttrDiff{
+						Old:         "foo",
+						New:         "",
+						RequiresNew: true,
+						NewRemoved:  true,
+					},
+				},
+			},
+
+			Err: false,
+		},
+
+		// GH-7715
+		"computed value for boolean field": {
+			Schema: map[string]*Schema{
+				"foo": &Schema{
+					Type:     TypeBool,
+					ForceNew: true,
+					Computed: true,
+					Optional: true,
+				},
+			},
+
+			State: &terraform.InstanceState{},
+
+			Config: map[string]interface{}{
+				"foo": "${var.foo}",
+			},
+
+			ConfigVariables: map[string]ast.Variable{
+				"var.foo": interfaceToVariableSwallowError(
+					config.UnknownVariableValue),
+			},
+
+			Diff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"foo": &terraform.ResourceAttrDiff{
+						Old:         "",
+						New:         "false",
+						NewComputed: true,
+						RequiresNew: true,
+					},
+				},
 			},
 
 			Err: false,
@@ -2850,21 +2922,6 @@ func TestSchemaMap_InternalValidate(t *testing.T) {
 			true,
 		},
 
-		"ConflictsWith cannot be used w/ Computed": {
-			map[string]*Schema{
-				"blacklist": &Schema{
-					Type:     TypeBool,
-					Computed: true,
-				},
-				"whitelist": &Schema{
-					Type:          TypeBool,
-					Optional:      true,
-					ConflictsWith: []string{"blacklist"},
-				},
-			},
-			true,
-		},
-
 		"ConflictsWith cannot be used w/ ComputedWhen": {
 			map[string]*Schema{
 				"blacklist": &Schema{
@@ -2928,7 +2985,7 @@ func TestSchemaMap_InternalValidate(t *testing.T) {
 	}
 
 	for tn, tc := range cases {
-		err := schemaMap(tc.In).InternalValidate(schemaMap{})
+		err := schemaMap(tc.In).InternalValidate(nil)
 		if err != nil != tc.Err {
 			if tc.Err {
 				t.Fatalf("%q: Expected error did not occur:\n\n%#v", tn, tc.In)
@@ -2970,6 +3027,7 @@ func TestSchemaMap_DiffSuppress(t *testing.T) {
 
 			Err: false,
 		},
+
 		"#1 - Don't suppress diff by returning false": {
 			Schema: map[string]*Schema{
 				"availability_zone": {
@@ -2999,29 +3057,80 @@ func TestSchemaMap_DiffSuppress(t *testing.T) {
 
 			Err: false,
 		},
+
+		"Default with suppress makes no diff": {
+			Schema: map[string]*Schema{
+				"availability_zone": {
+					Type:     TypeString,
+					Optional: true,
+					Default:  "foo",
+					DiffSuppressFunc: func(k, old, new string, d *ResourceData) bool {
+						return true
+					},
+				},
+			},
+
+			State: nil,
+
+			Config: map[string]interface{}{},
+
+			ExpectedDiff: nil,
+
+			Err: false,
+		},
+
+		"Default with false suppress makes diff": {
+			Schema: map[string]*Schema{
+				"availability_zone": {
+					Type:     TypeString,
+					Optional: true,
+					Default:  "foo",
+					DiffSuppressFunc: func(k, old, new string, d *ResourceData) bool {
+						return false
+					},
+				},
+			},
+
+			State: nil,
+
+			Config: map[string]interface{}{},
+
+			ExpectedDiff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"availability_zone": {
+						Old: "",
+						New: "foo",
+					},
+				},
+			},
+
+			Err: false,
+		},
 	}
 
 	for tn, tc := range cases {
-		c, err := config.NewRawConfig(tc.Config)
-		if err != nil {
-			t.Fatalf("#%q err: %s", tn, err)
-		}
-
-		if len(tc.ConfigVariables) > 0 {
-			if err := c.Interpolate(tc.ConfigVariables); err != nil {
+		t.Run(tn, func(t *testing.T) {
+			c, err := config.NewRawConfig(tc.Config)
+			if err != nil {
 				t.Fatalf("#%q err: %s", tn, err)
 			}
-		}
 
-		d, err := schemaMap(tc.Schema).Diff(
-			tc.State, terraform.NewResourceConfig(c))
-		if err != nil != tc.Err {
-			t.Fatalf("#%q err: %s", tn, err)
-		}
+			if len(tc.ConfigVariables) > 0 {
+				if err := c.Interpolate(tc.ConfigVariables); err != nil {
+					t.Fatalf("#%q err: %s", tn, err)
+				}
+			}
 
-		if !reflect.DeepEqual(tc.ExpectedDiff, d) {
-			t.Fatalf("#%q:\n\nexpected:\n%#v\n\ngot:\n%#v", tn, tc.ExpectedDiff, d)
-		}
+			d, err := schemaMap(tc.Schema).Diff(
+				tc.State, terraform.NewResourceConfig(c))
+			if err != nil != tc.Err {
+				t.Fatalf("#%q err: %s", tn, err)
+			}
+
+			if !reflect.DeepEqual(tc.ExpectedDiff, d) {
+				t.Fatalf("#%q:\n\nexpected:\n%#v\n\ngot:\n%#v", tn, tc.ExpectedDiff, d)
+			}
+		})
 	}
 }
 
@@ -3671,6 +3780,78 @@ func TestSchemaMap_Validate(t *testing.T) {
 			},
 		},
 
+		"Computed + Optional fields conflicting with each other": {
+			Schema: map[string]*Schema{
+				"foo_att": &Schema{
+					Type:          TypeString,
+					Optional:      true,
+					Computed:      true,
+					ConflictsWith: []string{"bar_att"},
+				},
+				"bar_att": &Schema{
+					Type:          TypeString,
+					Optional:      true,
+					Computed:      true,
+					ConflictsWith: []string{"foo_att"},
+				},
+			},
+
+			Config: map[string]interface{}{
+				"foo_att": "foo-val",
+				"bar_att": "bar-val",
+			},
+
+			Err: true,
+			Errors: []error{
+				fmt.Errorf(`"foo_att": conflicts with bar_att ("bar-val")`),
+				fmt.Errorf(`"bar_att": conflicts with foo_att ("foo-val")`),
+			},
+		},
+
+		"Computed + Optional fields NOT conflicting with each other": {
+			Schema: map[string]*Schema{
+				"foo_att": &Schema{
+					Type:          TypeString,
+					Optional:      true,
+					Computed:      true,
+					ConflictsWith: []string{"bar_att"},
+				},
+				"bar_att": &Schema{
+					Type:          TypeString,
+					Optional:      true,
+					Computed:      true,
+					ConflictsWith: []string{"foo_att"},
+				},
+			},
+
+			Config: map[string]interface{}{
+				"foo_att": "foo-val",
+			},
+
+			Err: false,
+		},
+
+		"Computed + Optional fields that conflict with none set": {
+			Schema: map[string]*Schema{
+				"foo_att": &Schema{
+					Type:          TypeString,
+					Optional:      true,
+					Computed:      true,
+					ConflictsWith: []string{"bar_att"},
+				},
+				"bar_att": &Schema{
+					Type:          TypeString,
+					Optional:      true,
+					Computed:      true,
+					ConflictsWith: []string{"foo_att"},
+				},
+			},
+
+			Config: map[string]interface{}{},
+
+			Err: false,
+		},
+
 		"Good with ValidateFunc": {
 			Schema: map[string]*Schema{
 				"validate_me": &Schema{
@@ -3798,6 +3979,9 @@ func TestSchemaMap_Validate(t *testing.T) {
 		}
 
 		if tc.Errors != nil {
+			sort.Sort(errorSort(es))
+			sort.Sort(errorSort(tc.Errors))
+
 			if !reflect.DeepEqual(es, tc.Errors) {
 				t.Fatalf("%q: errors:\n\nexpected: %q\ngot: %q", tn, tc.Errors, es)
 			}
@@ -3894,4 +4078,104 @@ func TestSchemaSet_ValidateMaxItems(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestSchemaSet_ValidateMinItems(t *testing.T) {
+	cases := map[string]struct {
+		Schema          map[string]*Schema
+		State           *terraform.InstanceState
+		Config          map[string]interface{}
+		ConfigVariables map[string]string
+		Diff            *terraform.InstanceDiff
+		Err             bool
+		Errors          []error
+	}{
+		"#0": {
+			Schema: map[string]*Schema{
+				"aliases": &Schema{
+					Type:     TypeSet,
+					Optional: true,
+					MinItems: 2,
+					Elem:     &Schema{Type: TypeString},
+				},
+			},
+			State: nil,
+			Config: map[string]interface{}{
+				"aliases": []interface{}{"foo", "bar"},
+			},
+			Diff:   nil,
+			Err:    false,
+			Errors: nil,
+		},
+		"#1": {
+			Schema: map[string]*Schema{
+				"aliases": &Schema{
+					Type:     TypeSet,
+					Optional: true,
+					Elem:     &Schema{Type: TypeString},
+				},
+			},
+			State: nil,
+			Config: map[string]interface{}{
+				"aliases": []interface{}{"foo", "bar"},
+			},
+			Diff:   nil,
+			Err:    false,
+			Errors: nil,
+		},
+		"#2": {
+			Schema: map[string]*Schema{
+				"aliases": &Schema{
+					Type:     TypeSet,
+					Optional: true,
+					MinItems: 2,
+					Elem:     &Schema{Type: TypeString},
+				},
+			},
+			State: nil,
+			Config: map[string]interface{}{
+				"aliases": []interface{}{"foo"},
+			},
+			Diff: nil,
+			Err:  true,
+			Errors: []error{
+				fmt.Errorf("aliases: attribute supports 2 item as a minimum, config has 1 declared"),
+			},
+		},
+	}
+
+	for tn, tc := range cases {
+		c, err := config.NewRawConfig(tc.Config)
+		if err != nil {
+			t.Fatalf("%q: err: %s", tn, err)
+		}
+		_, es := schemaMap(tc.Schema).Validate(terraform.NewResourceConfig(c))
+
+		if len(es) > 0 != tc.Err {
+			if len(es) == 0 {
+				t.Errorf("%q: no errors", tn)
+			}
+
+			for _, e := range es {
+				t.Errorf("%q: err: %s", tn, e)
+			}
+
+			t.FailNow()
+		}
+
+		if tc.Errors != nil {
+			if !reflect.DeepEqual(es, tc.Errors) {
+				t.Fatalf("%q: expected: %q\ngot: %q", tn, tc.Errors, es)
+			}
+		}
+	}
+}
+
+// errorSort implements sort.Interface to sort errors by their error message
+type errorSort []error
+
+func (e errorSort) Len() int      { return len(e) }
+func (e errorSort) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
+func (e errorSort) Less(i, j int) bool {
+	return e[i].Error() < e[j].Error()
 }

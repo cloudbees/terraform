@@ -113,8 +113,14 @@ type Schema struct {
 	// TypeSet or TypeList. Specific use cases would be if a TypeSet is being
 	// used to wrap a complex structure, however more than one instance would
 	// cause instability.
+	//
+	// MinItems defines a minimum amount of items that can exist within a
+	// TypeSet or TypeList. Specific use cases would be if a TypeSet is being
+	// used to wrap a complex structure, however less than one instance would
+	// cause instability.
 	Elem     interface{}
 	MaxItems int
+	MinItems int
 
 	// The following fields are only valid for a TypeSet type.
 	//
@@ -129,7 +135,10 @@ type Schema struct {
 	// NOTE: This currently does not work.
 	ComputedWhen []string
 
-	// ConflictsWith is a set of schema keys that conflict with this schema
+	// ConflictsWith is a set of schema keys that conflict with this schema.
+	// This will only check that they're set in the _config_. This will not
+	// raise an error for a malfunctioning resource that sets a conflicting
+	// key.
 	ConflictsWith []string
 
 	// When Deprecated is set, this attribute is deprecated.
@@ -279,6 +288,11 @@ func (s *Schema) finalizeDiff(
 		d.New = normalizeBoolString(d.New)
 	}
 
+	if s.ForceNew {
+		// Force new, set it to true in the diff
+		d.RequiresNew = true
+	}
+
 	if d.NewRemoved {
 		return d
 	}
@@ -294,11 +308,6 @@ func (s *Schema) finalizeDiff(
 			// Computed attribute without a new value set
 			d.NewComputed = true
 		}
-	}
-
-	if s.ForceNew {
-		// Force new, set it to true in the diff
-		d.RequiresNew = true
 	}
 
 	if s.Sensitive {
@@ -565,7 +574,7 @@ func (m schemaMap) InternalValidate(topSchemaMap schemaMap) error {
 					return fmt.Errorf("%s: ConflictsWith cannot contain Required attribute (%s)", k, key)
 				}
 
-				if target.Computed || len(target.ComputedWhen) > 0 {
+				if len(target.ComputedWhen) > 0 {
 					return fmt.Errorf("%s: ConflictsWith cannot contain Computed(When) attribute (%s)", k, key)
 				}
 			}
@@ -597,8 +606,8 @@ func (m schemaMap) InternalValidate(topSchemaMap schemaMap) error {
 				}
 			}
 		} else {
-			if v.MaxItems > 0 {
-				return fmt.Errorf("%s: MaxItems is only supported on lists or sets", k)
+			if v.MaxItems > 0 || v.MinItems > 0 {
+				return fmt.Errorf("%s: MaxItems and MinItems are only supported on lists or sets", k)
 			}
 		}
 
@@ -638,7 +647,9 @@ func (m schemaMap) diff(
 	}
 
 	for attrK, attrV := range unsupressedDiff.Attributes {
-		if schema.DiffSuppressFunc != nil && schema.DiffSuppressFunc(attrK, attrV.Old, attrV.New, d) {
+		if schema.DiffSuppressFunc != nil &&
+			attrV != nil &&
+			schema.DiffSuppressFunc(attrK, attrV.Old, attrV.New, d) {
 			continue
 		}
 
@@ -987,7 +998,7 @@ func (m schemaMap) diffString(
 	all bool) error {
 	var originalN interface{}
 	var os, ns string
-	o, n, _, _ := d.diffChange(k)
+	o, n, _, computed := d.diffChange(k)
 	if schema.StateFunc != nil && n != nil {
 		originalN = n
 		n = schema.StateFunc(n)
@@ -1011,7 +1022,7 @@ func (m schemaMap) diffString(
 		}
 
 		// Otherwise, only continue if we're computed
-		if !schema.Computed {
+		if !schema.Computed && !computed {
 			return nil
 		}
 	}
@@ -1025,10 +1036,11 @@ func (m schemaMap) diffString(
 	}
 
 	diff.Attributes[k] = schema.finalizeDiff(&terraform.ResourceAttrDiff{
-		Old:        os,
-		New:        ns,
-		NewExtra:   originalN,
-		NewRemoved: removed,
+		Old:         os,
+		New:         ns,
+		NewExtra:    originalN,
+		NewRemoved:  removed,
+		NewComputed: computed,
 	})
 
 	return nil
@@ -1124,6 +1136,11 @@ func (m schemaMap) validateList(
 	if schema.MaxItems > 0 && rawV.Len() > schema.MaxItems {
 		return nil, []error{fmt.Errorf(
 			"%s: attribute supports %d item maximum, config has %d declared", k, schema.MaxItems, rawV.Len())}
+	}
+
+	if schema.MinItems > 0 && rawV.Len() < schema.MinItems {
+		return nil, []error{fmt.Errorf(
+			"%s: attribute supports %d item as a minimum, config has %d declared", k, schema.MinItems, rawV.Len())}
 	}
 
 	// Now build the []interface{}

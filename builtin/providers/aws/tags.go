@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -19,6 +19,14 @@ func tagsSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeMap,
 		Optional: true,
+	}
+}
+
+func tagsSchemaComputed() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeMap,
+		Optional: true,
+		Computed: true,
 	}
 }
 
@@ -70,7 +78,7 @@ func setTags(conn *ec2.EC2, d *schema.ResourceData) error {
 
 		// Set tags
 		if len(remove) > 0 {
-			err := resource.Retry(5*time.Minute, func() *resource.RetryError {
+			err := resource.Retry(2*time.Minute, func() *resource.RetryError {
 				log.Printf("[DEBUG] Removing tags: %#v from %s", remove, d.Id())
 				_, err := conn.DeleteTags(&ec2.DeleteTagsInput{
 					Resources: []*string{aws.String(d.Id())},
@@ -79,10 +87,8 @@ func setTags(conn *ec2.EC2, d *schema.ResourceData) error {
 				if err != nil {
 					ec2err, ok := err.(awserr.Error)
 					if ok && strings.Contains(ec2err.Code(), ".NotFound") {
-						log.Printf("[INFO] RetryableError deleting tags for: %s %s", d.Id(), err)
 						return resource.RetryableError(err) // retry
 					}
-					log.Printf("[INFO] NonRetryableError deleting tags for: %s %s", d.Id(), err)
 					return resource.NonRetryableError(err)
 				}
 				return nil
@@ -91,9 +97,8 @@ func setTags(conn *ec2.EC2, d *schema.ResourceData) error {
 				return err
 			}
 		}
-
 		if len(create) > 0 {
-			err := resource.Retry(5*time.Minute, func() *resource.RetryError {
+			err := resource.Retry(2*time.Minute, func() *resource.RetryError {
 				log.Printf("[DEBUG] Creating tags: %s for %s", create, d.Id())
 				_, err := conn.CreateTags(&ec2.CreateTagsInput{
 					Resources: []*string{aws.String(d.Id())},
@@ -102,10 +107,8 @@ func setTags(conn *ec2.EC2, d *schema.ResourceData) error {
 				if err != nil {
 					ec2err, ok := err.(awserr.Error)
 					if ok && strings.Contains(ec2err.Code(), ".NotFound") {
-						log.Printf("[INFO] RetryableError setting tags for: %s %s", d.Id(), err)
 						return resource.RetryableError(err) // retry
 					}
-					log.Printf("[INFO] NonRetryableError setting tags for: %s %s", d.Id(), err)
 					return resource.NonRetryableError(err)
 				}
 				return nil
@@ -114,7 +117,6 @@ func setTags(conn *ec2.EC2, d *schema.ResourceData) error {
 				return err
 			}
 		}
-
 	}
 
 	return nil

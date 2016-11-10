@@ -60,7 +60,7 @@ The following arguments are supported:
 * `disk` - (Required) Disks to attach to the instance. This can be specified
     multiple times for multiple disks. Structure is documented below.
 
-* `machine_type` - (Required) The machine type to create.To create a custom
+* `machine_type` - (Required) The machine type to create. To create a custom
     machine type, value should be set as specified
     [here](https://cloud.google.com/compute/docs/reference/latest/instances#machineType)
 
@@ -112,9 +112,11 @@ the type is "local-ssd", in which case scratch must be true).
     `google_compute_disk`) to attach.
 
 * `image` - The image from which to initialize this
-    disk. Either the full URL, a contraction of the form "project/name", an
+    disk. Either the full URL, a contraction of the form "project/name", the
+    name of a Google-supported
     [image family](https://cloud.google.com/compute/docs/images#image_families),
-    or just a name (in which case the current project is used).
+    or simple the name of an image or image family (in which case the current
+    project is used).
 
 * `auto_delete` - (Optional) Whether or not the disk should be auto-deleted.
     This defaults to true. Leave true for local SSDs.
@@ -133,7 +135,7 @@ the type is "local-ssd", in which case scratch must be true).
 
 The `network_interface` block supports:
 
-* `network` - (Optional) The name of the network to attach this interface to.
+* `network` - (Optional) The name or self_link of the network to attach this interface to.
     Either `network` or `subnetwork` must be provided.
 
 *  `subnetwork` - (Optional) the name of the subnetwork to attach this interface

@@ -361,6 +361,13 @@ func resourceComputeInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		disk.Boot = i == 0
 		disk.AutoDelete = d.Get(prefix + ".auto_delete").(bool)
 
+		if _, ok := d.GetOk(prefix + ".disk"); ok {
+			if _, ok := d.GetOk(prefix + ".type"); ok {
+				return fmt.Errorf(
+					"Error: cannot define both disk and type.")
+			}
+		}
+
 		// Load up the disk for this disk if specified
 		if v, ok := d.GetOk(prefix + ".disk"); ok {
 			diskName := v.(string)
@@ -478,14 +485,13 @@ func resourceComputeInstanceCreate(d *schema.ResourceData, meta interface{}) err
 			if networkName != "" && subnetworkName != "" {
 				return fmt.Errorf("Cannot specify both network and subnetwork values.")
 			} else if networkName != "" {
-				network, err := config.clientCompute.Networks.Get(
-					project, networkName).Do()
+				networkLink, err = getNetworkLink(d, config, prefix+".network")
 				if err != nil {
 					return fmt.Errorf(
 						"Error referencing network '%s': %s",
 						networkName, err)
 				}
-				networkLink = network.SelfLink
+
 			} else {
 				region := getRegionFromZone(d.Get("zone").(string))
 				subnetwork, err := config.clientCompute.Subnetworks.Get(

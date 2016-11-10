@@ -19,24 +19,24 @@ func dataSourceAwsAmi() *schema.Resource {
 		Read: dataSourceAwsAmiRead,
 
 		Schema: map[string]*schema.Schema{
-			"executable_users": &schema.Schema{
+			"executable_users": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"filter": &schema.Schema{
+			"filter": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"values": &schema.Schema{
+						"values": {
 							Type:     schema.TypeList,
 							Required: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
@@ -44,158 +44,159 @@ func dataSourceAwsAmi() *schema.Resource {
 					},
 				},
 			},
-			"name_regex": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+			"name_regex": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateNameRegex,
 			},
-			"most_recent": &schema.Schema{
+			"most_recent": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 				ForceNew: true,
 			},
-			"owners": &schema.Schema{
+			"owners": {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			// Computed values.
-			"architecture": &schema.Schema{
+			"architecture": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"creation_date": &schema.Schema{
+			"creation_date": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"hypervisor": &schema.Schema{
+			"hypervisor": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"image_id": &schema.Schema{
+			"image_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"image_location": &schema.Schema{
+			"image_location": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"image_owner_alias": &schema.Schema{
+			"image_owner_alias": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"image_type": &schema.Schema{
+			"image_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"kernel_id": &schema.Schema{
+			"kernel_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"owner_id": &schema.Schema{
+			"owner_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"platform": &schema.Schema{
+			"platform": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"public": &schema.Schema{
+			"public": {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			"ramdisk_id": &schema.Schema{
+			"ramdisk_id": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"root_device_name": &schema.Schema{
+			"root_device_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"root_device_type": &schema.Schema{
+			"root_device_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"sriov_net_support": &schema.Schema{
+			"sriov_net_support": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"state": &schema.Schema{
+			"state": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"virtualization_type": &schema.Schema{
+			"virtualization_type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			// Complex computed values
-			"block_device_mappings": &schema.Schema{
+			"block_device_mappings": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Set:      amiBlockDeviceMappingHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"device_name": &schema.Schema{
+						"device_name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"no_device": &schema.Schema{
+						"no_device": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"virtual_name": &schema.Schema{
+						"virtual_name": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"ebs": &schema.Schema{
+						"ebs": {
 							Type:     schema.TypeMap,
 							Computed: true,
 						},
 					},
 				},
 			},
-			"product_codes": &schema.Schema{
+			"product_codes": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Set:      amiProductCodesHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"product_code_id": &schema.Schema{
+						"product_code_id": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"product_code_type": &schema.Schema{
+						"product_code_type": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
 					},
 				},
 			},
-			"state_reason": &schema.Schema{
+			"state_reason": {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
-			"tags": &schema.Schema{
+			"tags": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Set:      amiTagsHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"key": &schema.Schema{
+						"key": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"value": &schema.Schema{
+						"value": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
@@ -236,10 +237,19 @@ func dataSourceAwsAmiRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var filteredImages []*ec2.Image
-	if nameRegexOk == true {
+	if nameRegexOk {
 		r := regexp.MustCompile(nameRegex.(string))
 		for _, image := range resp.Images {
-			if r.MatchString(*image.Name) == true {
+			// Check for a very rare case where the response would include no
+			// image name. No name means nothing to attempt a match against,
+			// therefore we are skipping such image.
+			if image.Name == nil || *image.Name == "" {
+				log.Printf("[WARN] Unable to find AMI name to match against "+
+					"for image ID %q owned by %q, nothing to do.",
+					*image.ImageId, *image.OwnerId)
+				continue
+			}
+			if r.MatchString(*image.Name) {
 				filteredImages = append(filteredImages, image)
 			}
 		}
@@ -249,19 +259,24 @@ func dataSourceAwsAmiRead(d *schema.ResourceData, meta interface{}) error {
 
 	var image *ec2.Image
 	if len(filteredImages) < 1 {
-		return fmt.Errorf("Your query returned no results. Please change your filters and try again.")
-	} else if len(filteredImages) > 1 {
-		if (d.Get("most_recent").(bool)) == true {
-			log.Printf("[DEBUG] aws_ami - multiple results found and most_recent is set")
+		return fmt.Errorf("Your query returned no results. Please change your search criteria and try again.")
+	}
+
+	if len(filteredImages) > 1 {
+		recent := d.Get("most_recent").(bool)
+		log.Printf("[DEBUG] aws_ami - multiple results found and `most_recent` is set to: %t", recent)
+		if recent {
 			image = mostRecentAmi(filteredImages)
 		} else {
-			log.Printf("[DEBUG] aws_ami - multiple results found and most_recent not set")
-			return fmt.Errorf("Your query returned more than one result. Please try a more specific search, or set most_recent to true.")
+			return fmt.Errorf("Your query returned more than one result. Please try a more " +
+				"specific search criteria, or set `most_recent` attribute to true.")
 		}
 	} else {
-		log.Printf("[DEBUG] aws_ami - Single AMI found: %s", *filteredImages[0].ImageId)
+		// Query returned single result.
 		image = filteredImages[0]
 	}
+
+	log.Printf("[DEBUG] aws_ami - Single AMI found: %s", *image.ImageId)
 	return amiDescriptionAttributes(d, image)
 }
 
@@ -482,4 +497,15 @@ func amiTagsHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-", m["key"].(string)))
 	buf.WriteString(fmt.Sprintf("%s-", m["value"].(string)))
 	return hashcode.String(buf.String())
+}
+
+func validateNameRegex(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+
+	if _, err := regexp.Compile(value); err != nil {
+		errors = append(errors, fmt.Errorf(
+			"%q contains an invalid regular expression: %s",
+			k, err))
+	}
+	return
 }

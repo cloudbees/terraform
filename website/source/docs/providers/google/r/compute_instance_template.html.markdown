@@ -27,8 +27,11 @@ resource "google_compute_instance_template" "foobar" {
   instance_description = "description assigned to instances"
   machine_type         = "n1-standard-1"
   can_ip_forward       = false
-  automatic_restart    = true
-  on_host_maintenance  = "MIGRATE"
+
+  scheduling {
+    automatic_restart   = true
+    on_host_maintenance = "MIGRATE"
+  }
 
   // Create a new boot disk from an image
   disk {
@@ -192,7 +195,7 @@ The `disk` block supports:
 
 The `network_interface` block supports:
 
-* `network` - (Optional) The name of the network to attach this interface to.
+* `network` - (Optional) The name or self_link of the network to attach this interface to.
     Use `network` attribute for Legacy or Auto subnetted networks and
     `subnetwork` for custom subnetted networks.
 
