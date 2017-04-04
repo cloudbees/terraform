@@ -66,6 +66,7 @@ func resourceAwsAlbListenerRule() *schema.Resource {
 						},
 						"values": {
 							Type:     schema.TypeList,
+							MaxItems: 1,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Optional: true,
 						},
@@ -144,10 +145,15 @@ func resourceAwsAlbListenerRuleRead(d *schema.ResourceData, meta interface{}) er
 	rule := resp.Rules[0]
 
 	d.Set("arn", rule.RuleArn)
-	if priority, err := strconv.Atoi(*rule.Priority); err != nil {
-		return errwrap.Wrapf("Cannot convert rule priority %q to int: {{err}}", err)
+	// Rules are evaluated in priority order, from the lowest value to the highest value. The default rule has the lowest priority.
+	if *rule.Priority == "default" {
+		d.Set("priority", 99999)
 	} else {
-		d.Set("priority", priority)
+		if priority, err := strconv.Atoi(*rule.Priority); err != nil {
+			return errwrap.Wrapf("Cannot convert rule priority %q to int: {{err}}", err)
+		} else {
+			d.Set("priority", priority)
+		}
 	}
 
 	actions := make([]interface{}, len(rule.Actions))
