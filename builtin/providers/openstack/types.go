@@ -16,6 +16,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/dns/v2/zones"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/firewalls"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/policies"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/routerinsertion"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/fwaas/rules"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
@@ -46,9 +47,10 @@ func (lrt *LogRoundTripper) RoundTrip(request *http.Request) (*http.Response, er
 
 	if lrt.OsDebug {
 		log.Printf("[DEBUG] OpenStack Request URL: %s %s", request.Method, request.URL)
+		log.Printf("[DEBUG] Openstack Request Headers:\n%s", FormatHeaders(request.Header, "\n"))
 
 		if request.Body != nil {
-			request.Body, err = lrt.logRequest(request.Body, request.Header)
+			request.Body, err = lrt.logRequest(request.Body, request.Header.Get("Content-Type"))
 			if err != nil {
 				return nil, err
 			}
@@ -61,7 +63,10 @@ func (lrt *LogRoundTripper) RoundTrip(request *http.Request) (*http.Response, er
 	}
 
 	if lrt.OsDebug {
-		response.Body, err = lrt.logResponse(response.Body, response.Header)
+		log.Printf("[DEBUG] Openstack Response Code: %d", response.StatusCode)
+		log.Printf("[DEBUG] Openstack Response Headers:\n%s", FormatHeaders(response.Header, "\n"))
+
+		response.Body, err = lrt.logResponse(response.Body, response.Header.Get("Content-Type"))
 	}
 
 	return response, err
@@ -69,7 +74,7 @@ func (lrt *LogRoundTripper) RoundTrip(request *http.Request) (*http.Response, er
 
 // logRequest will log the HTTP Request details.
 // If the body is JSON, it will attempt to be pretty-formatted.
-func (lrt *LogRoundTripper) logRequest(original io.ReadCloser, headers http.Header) (io.ReadCloser, error) {
+func (lrt *LogRoundTripper) logRequest(original io.ReadCloser, contentType string) (io.ReadCloser, error) {
 	defer original.Close()
 
 	var bs bytes.Buffer
@@ -78,10 +83,7 @@ func (lrt *LogRoundTripper) logRequest(original io.ReadCloser, headers http.Head
 		return nil, err
 	}
 
-	log.Printf("[DEBUG] Openstack Request headers:\n%s", strings.Join(RedactHeaders(headers), "\n"))
-
 	// Handle request contentType
-	contentType := headers.Get("Content-Type")
 	if strings.HasPrefix(contentType, "application/json") {
 		debugInfo := lrt.formatJSON(bs.Bytes())
 		log.Printf("[DEBUG] OpenStack Request Body: %s", debugInfo)
@@ -94,10 +96,7 @@ func (lrt *LogRoundTripper) logRequest(original io.ReadCloser, headers http.Head
 
 // logResponse will log the HTTP Response details.
 // If the body is JSON, it will attempt to be pretty-formatted.
-func (lrt *LogRoundTripper) logResponse(original io.ReadCloser, headers http.Header) (io.ReadCloser, error) {
-	log.Printf("[DEBUG] Openstack Response headers:\n%s", strings.Join(RedactHeaders(headers), "\n"))
-
-	contentType := headers.Get("Content-Type")
+func (lrt *LogRoundTripper) logResponse(original io.ReadCloser, contentType string) (io.ReadCloser, error) {
 	if strings.HasPrefix(contentType, "application/json") {
 		var bs bytes.Buffer
 		defer original.Close()
@@ -154,15 +153,35 @@ func (lrt *LogRoundTripper) formatJSON(raw []byte) string {
 	return string(pretty)
 }
 
+// Firewall is an OpenStack firewall.
+type Firewall struct {
+	firewalls.Firewall
+	routerinsertion.FirewallExt
+}
+
 // FirewallCreateOpts represents the attributes used when creating a new firewall.
 type FirewallCreateOpts struct {
-	firewalls.CreateOpts
+	firewalls.CreateOptsBuilder
 	ValueSpecs map[string]string `json:"value_specs,omitempty"`
 }
 
-// ToFirewallCreateMap casts a CreateOpts struct to a map.
+// ToFirewallCreateMap casts a CreateOptsExt struct to a map.
 // It overrides firewalls.ToFirewallCreateMap to add the ValueSpecs field.
 func (opts FirewallCreateOpts) ToFirewallCreateMap() (map[string]interface{}, error) {
+	body, err := opts.CreateOptsBuilder.ToFirewallCreateMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return AddValueSpecs(body), nil
+}
+
+//FirewallUpdateOpts
+type FirewallUpdateOpts struct {
+	firewalls.UpdateOptsBuilder
+}
+
+func (opts FirewallUpdateOpts) ToFirewallUpdateMap() (map[string]interface{}, error) {
 	return BuildRequest(opts, "firewall")
 }
 
